@@ -1,0 +1,268 @@
+================================================================================
+ROLE-BASED QUESTIONS TEMPLATE
+================================================================================
+Instructions:
+1. Fill in the sections below for each role
+2. For rating questions: Format is "Q: Question text | Ideal: X" (where X is 1-5)
+3. For multiselect questions: List question, then options with dashes (-)
+4. Save this file and tell me when you're done - I'll convert it to code!
+5. You can copy questions from Associate role and just change ideal ratings
+
+================================================================================
+ROLE: UX Designer
+================================================================================
+
+CATEGORY: Problem Discovery & Product Understanding
+Q: How effectively do you define and document the problem statement, user needs, business goals, risks, and success metrics before beginning design work? | Ideal: 4
+Q: How consistently do you create discovery briefs before moving into wireframes or solutioning? | Ideal: 4
+Q: How effectively do you identify dependencies, constraints, and risks that may impact design outcomes? | Ideal: 4
+Q: How often do you facilitate alignment activities with PMs, Engineers, or Stakeholders before finalizing design direction? | Ideal: 4
+Q: How consistently are your design decisions traceable to research findings, business goals, constraints, or metrics? | Ideal: 4
+
+CATEGORY: UX Research and Validation
+Q: How confident are you in independently planning and executing usability studies or evaluative research? | Ideal: 4
+Q: How effectively do you synthesize findings into actionable design recommendations? | Ideal: 4
+Q: How frequently do research findings directly influence your design decisions?| Ideal: 4
+Q: How confident are you in prioritizing and communicating research insights to stakeholders? | Ideal: 4
+Q: How effectively do you measure and demonstrate improvements in user experience after design changes?| Ideal: 4
+Q: How comfortable are you selecting appropriate research methods based on project goals? | Ideal: 4
+
+CATEGORY: Design Execution and Product Thinking
+Q: How effectively do you translate complex requirements into end-to-end user journeys and solutions? | Ideal: 4
+Q: How well do you balance user needs, business goals, and technical constraints in your designs? | Ideal: 4
+Q: How effectively do you use prototyping to validate concepts and communicate design intent?| Ideal: 4
+Q: How frequently do you explore multiple solution approaches before committing to a final direction? | Ideal: 4
+Q: How comfortable are you defending design decisions using evidence and reasoning?| Ideal: 4
+
+CATEGORY: AI and Design Integration
+Q: How frequently do you use AI tools to improve your design workflow?| Ideal: 4
+Q: How effectively do you use AI for activities such as research synthesis, ideation, documentation, content generation, or prototyping?| Ideal: 4
+Q: How confident are you identifying opportunities to integrate AI within product experiences? | Ideal: 4
+Q: How effectively have AI tools helped reduce effort or improve efficiency in your work?| Ideal: 4
+Q: How often do you share AI learnings, workflows, or best practices with your team?| Ideal: 4
+
+CATEGORY: Design System and Consistency
+Q: How consistently do you use approved Design System patterns and components?| Ideal: 4
+Q: How frequently do you validate your designs against accessibility and usability standards?| Ideal: 4
+Q: How often do you identify and raise design system gaps, inconsistencies, or improvement opportunities?| Ideal: 4
+Q: How effectively do you advocate for reusable patterns over custom solutions?| Ideal: 4
+
+CATEGORY: Documentation and Knowledge Sharing
+Q: How consistently do your design handoffs meet team documentation standards?| Ideal: 4
+Q: How effectively does your documentation communicate intent, rationale, and implementation requirements?| Ideal: 4
+Q: How well do you maintain FigJam artifacts, process maps, and project documentation?| Ideal: 4
+Q: How easy would it be for another designer or engineer to pick up your work using your documentation? | Ideal: 4
+
+CATEGORY: Collaboration and Stakeholder Management
+Q: How effectively do you collaborate with Product Managers, Engineers, Researchers, and Stakeholders throughout the design lifecycle?| Ideal: 4
+Q: How comfortable are you presenting design decisions to cross-functional stakeholders?| Ideal: 4
+Q: How effectively do you handle conflicting stakeholder feedback?| Ideal: 4
+Q: How confident are you facilitating workshops, alignment sessions, or design reviews?| Ideal: 3
+Q: How consistently do you communicate project progress, decisions, and updates through team channels?| Ideal: 4
+
+CATEGORY: Professional Growth and Community Contribution
+Q: How actively do you invest in learning new UX, product, business, or AI-related skills?| Ideal: 4
+Q: How consistently do you apply newly learned concepts in your project work?| Ideal: 4
+Q: How comfortable are you sharing knowledge through Design Cafés, workshops, mentoring, or presentations?| Ideal: 4
+Q: How often do you contribute to the growth of the design community within your team?| Ideal: 4
+
+CATEGORY: Career Aspirations (Non Scored)
+TYPE: MULTISELECT
+Q: What role would you like to grow into over the next 2 years?
+- Senior UX Designer
+- Lead UX Designer
+- UX Researcher
+- Design Manager
+- Product Designer
+- Not Sure Yet
+Q: Which areas would you like support in?
+- Leadership
+- Strategy
+- Research
+- Facilitation
+- Prototyping
+- Communication
+- AI
+- Accessibility
+- Stakeholder Management
+- Design Systems
+
+
+================================================================================
+ROLE: Senior UX Designer
+================================================================================
+
+CATEGORY: Discovery Leadership & Strategic Alignment
+Q: How effectively do you ensure problem statements, business goals, risks, assumptions, and success metrics are clearly defined before design work begins?| Ideal: 4
+Q: How consistently do you review and enforce Discovery Brief quality across projects within your workstream? | Ideal: 4
+Q: How effectively do you identify and communicate dependencies, risks, and implementation constraints to stakeholders?| Ideal: 4
+Q: How comfortable are you facilitating alignment workshops across multiple teams or product areas? | Ideal: 4
+Q: How effectively do you create alignment between Product, Engineering, and UX around problem understanding and priorities?| Ideal: 4
+Q: How consistently are major design decisions traceable to research, business goals, data, or stakeholder needs?| Ideal: 4
+
+CATEGORY: Research Leadership & Insight Generation
+Q: How confident are you leading research activities that influence product or workstream decisions?| Ideal: 4
+Q: How effectively do you create and maintain personas, user segments, or domain knowledge repositories? | Ideal: 4
+Q: How well do you synthesize research findings into actionable recommendations for stakeholders?| Ideal: 4
+Q: How effectively do you identify patterns and opportunities across multiple research studies?| Ideal: 4
+Q: How confident are you prioritizing insights based on business impact and user value?| Ideal: 4
+Q: How effectively do your research findings influence roadmap, feature, or business decisions? | Ideal: 4
+
+CATEGORY: Product Thinking & Design Leadership
+Q: How effectively do you connect UX decisions to product outcomes and business goals? | Ideal: 4
+Q: How comfortable are you challenging requirements or assumptions when evidence suggests a better direction?| Ideal: 4
+Q: How often do you help teams prioritize solutions based on impact rather than effort alone?| Ideal: 4
+Q: How effectively do you balance user needs, technical constraints, business priorities, and delivery timelines?| Ideal: 4
+Q: How confident are you making decisions in ambiguous or incomplete situations?| Ideal: 4
+
+CATEGORY: AI Adoption & Innovation Leadership
+Q: How effectively do you apply AI tools to improve research, design, documentation, or decision-making workflows?| Ideal: 4
+Q: How frequently do you identify opportunities for AI-driven user experiences or AI-enabled workflows?| Ideal: 4
+Q: How effectively have you used AI to improve productivity or reduce effort within your team?| Ideal: 4
+Q: How actively do you promote and encourage AI adoption within your squad? | Ideal: 4
+Q: How often do you share AI learnings, frameworks, prompts, or best practices with others?| Ideal: 4
+
+CATEGORY: Design System and Consistency
+Q: How consistently do you ensure Design System usage and adoption within your workstream? | Ideal: 4
+Q: How effectively do you identify opportunities to improve or extend Design System standards? | Ideal: 4
+Q: How actively do you contribute to Design System discussions, governance, or standards initiatives?| Ideal: 4
+Q: How effectively do you advocate for accessibility, consistency, and reuse across products?| Ideal: 4
+
+CATEGORY: Documentation & Operational Excellence
+Q: How consistently do you ensure project documentation meets organizational standards?| Ideal: 4
+Q: How effectively do you maintain decision logs, design rationale, and project artifacts?| Ideal: 4
+Q: How easy would it be for another designer, PM, or engineer to understand and continue work based on your documentation?| Ideal: 4
+Q: How effectively do you use documentation to improve transparency and reduce team dependencies? | Ideal: 4
+Q: How consistently do you share project learnings, demos, or best practices with broader teams? | Ideal: 5
+
+CATEGORY: Mentoring & Capability Building
+Q: How actively do you mentor designers and support their professional growth? | Ideal: 4
+Q: How effectively do you provide actionable feedback that improves others' performance? | Ideal: 4
+Q: How confident are you helping team members create development goals and growth plans?| Ideal: 5
+Q: How frequently do you share domain knowledge, frameworks, or best practices with the team?| Ideal: 4
+Q: How effectively do you contribute to building team capability and design maturity?| Ideal: 4
+
+CATEGORY: Collaboration, Influence & Facilitation
+Q: How effectively do you manage stakeholder expectations and align competing priorities?| Ideal: 4
+Q: How comfortable are you facilitating large-scale workshops and alignment sessions?| Ideal: 4
+Q: How effectively do you drive backlog discussions, prioritization, and decision-making conversations?| Ideal: 4
+Q: How consistently do you follow up on unresolved discussions and drive closure across teams?| Ideal: 4
+Q: How effectively do you influence decisions without relying on formal authority?| Ideal: 4
+Q: How often do stakeholders seek your input on product, process, or strategic decisions?| Ideal: 4
+
+CATEGORY: Career Aspirations (Non Scored)
+TYPE: MULTISELECT
+Q: What role would you like to grow into over the next 2 years?
+- Lead UX Designer
+- Principal Designer
+- Design Manager
+- Director of Design
+- Specialist (Research/Systems)
+- Not Sure Yet
+Q: Which areas would you like support in?
+- Leadership
+- Strategy
+- Mentorship
+- Team Building
+- Executive Communication
+- Design Operations
+- AI
+- Accessibility
+
+
+================================================================================
+ROLE: Lead UX Designer
+================================================================================
+
+CATEGORY: Strategic Vision & Portfolio Leadership
+Q: How effectively do you connect UX initiatives to business goals, customer outcomes, and organizational priorities? | Ideal: 5
+Q: How clearly do you define and communicate UX vision, success metrics, and desired outcomes across initiatives?| Ideal: 5
+Q: How effectively do you ensure teams understand the "why" behind major product and design decisions? | Ideal: 5
+Q: How consistently do initiatives under your influence begin with a validated problem statement and Discovery Gate review? | Ideal: 5
+Q: How effectively do you prioritize work based on customer value, business impact, and strategic objectives? | Ideal: 5
+Q: How often do stakeholders rely on your guidance when making strategic product decisions? | Ideal: 5
+
+CATEGORY: Research Operations & Evidence-Based Decision Making
+Q: How effectively do you establish and maintain research practices across your domain or workstream? | Ideal: 5
+Q: How confident are you building evidence-backed roadmaps using research insights and customer data?| Ideal: 5
+Q: How effectively do you ensure personas, user segments, and behavioral patterns remain current and actionable?| Ideal: 5
+Q: How often do research findings influence prioritization and roadmap decisions across teams?| Ideal: 5
+Q: How effectively do you identify organizational research gaps and create plans to address them? | Ideal: 5
+
+CATEGORY: AI Strategy & Innovation Leadership
+Q: How effectively do you define and advocate responsible AI principles within design processes and products?| Ideal: 5
+Q: How actively do you identify strategic opportunities for AI-driven innovation within products and workflows? | Ideal: 5
+Q: How effectively do you encourage and enable AI adoption across teams? | Ideal: 4
+Q: How consistently do you evaluate AI initiatives against ethical, usability, risk, and business considerations? | Ideal: 5
+Q: How effectively do you measure and communicate the impact of AI experiments or initiatives? | Ideal: 4
+Q: How actively do you share AI frameworks, best practices, or operating models with the wider design organization? | Ideal: 4
+
+CATEGORY: Design Systems, Standards & Governance
+Q: How effectively do you drive design system adoption across teams and products? | Ideal: 5
+Q: How actively do you contribute to defining design standards, governance, and consistency practices | Ideal: 5
+Q: How effectively do you influence design quality through standards, reviews, and reusable patterns? | Ideal: 5
+Q: How confident are you making decisions that balance standardization with product-specific needs?| Ideal: 4
+Q: How effectively do you communicate design standards and expectations across the UX organization? | Ideal: 4
+
+CATEGORY: Design Operations & Documentation Culture
+Q: How effectively do you establish documentation practices that improve transparency and reduce dependency on individuals? | Ideal: 5
+Q: How consistently do teams under your influence maintain high-quality documentation and decision records?| Ideal: 5
+Q: How effectively do you use documentation to improve onboarding, knowledge transfer, and team efficiency? | Ideal: 5
+Q: How successful have your documentation initiatives been in reducing duplicate effort or rework?| Ideal: 5
+Q: How effectively do you promote documentation as a core part of design excellence?| Ideal: 5
+
+CATEGORY: Talent Development, Mentoring & Role Clarity
+Q: How effectively do you mentor designers and help accelerate their career growth? | Ideal: 5
+Q: How confident are you identifying capability gaps and creating development plans for team members? | Ideal: 5
+Q: How actively do you contribute to defining career ladders, role expectations, or progression frameworks?| Ideal: 5
+Q: How effectively do you provide guidance on role clarity, responsibilities, and growth opportunities?| Ideal: 5
+Q: How frequently do designers seek you out for coaching, feedback, or career advice?| Ideal: 5
+Q: How effectively do you build capability across the design organization rather than just within your immediate team?| Ideal: 5
+
+CATEGORY: Organizational Influence & Stakeholder Leadership
+Q: How effectively do you build alignment across multiple teams, functions, or business units? | Ideal: 5
+Q: How confident are you facilitating leadership discussions involving competing priorities or viewpoints?| Ideal: 5
+Q: How effectively do you influence outcomes without direct authority? | Ideal: 5
+Q: How often do senior stakeholders seek your input on strategic or organizational decisions? | Ideal: 5
+Q: How effectively do you drive organizational forums, leadership connects, or cross-functional planning activities? | Ideal: 5
+Q: How consistently do you establish communication practices that improve collaboration across the organization? | Ideal: 5
+Q: How effectively do you represent and advocate for UX within leadership discussions?| Ideal: 5
+
+CATEGORY: Organizational Growth & UX Evangelization
+Q: How effectively do you promote UX thinking and customer-centric decision making across the organization? | Ideal: 5
+Q: How actively do you create opportunities for knowledge sharing, thought leadership, and design culture building?| Ideal: 5
+Q: How effectively do you identify future organizational capability needs and take action to address them?| Ideal: 5
+Q: How consistently do you champion initiatives that improve UX maturity across teams? | Ideal: 5
+Q: How effectively do you influence long-term organizational design direction? | Ideal: 5
+
+CATEGORY: Career Aspirations (Non Scored)
+TYPE: MULTISELECT
+Q: What role would you like to grow into over the next 2 years?
+- Principal Designer
+- Design Director
+- VP of Design
+- Design Strategist
+- Design Operations Lead
+- Stay in current role
+Q: Which areas would you like support in?
+- Executive Leadership
+- Strategic Vision
+- Team Scaling
+- Design Operations
+- Organizational Change
+- Executive Communication
+- Business Strategy
+- Innovation
+
+
+================================================================================
+NOTES:
+- Ideal ratings typically increase with seniority:
+  * Associate: 2-3
+  * UX Designer: 3-4
+  * Senior: 4-5
+  * Lead: 5
+- You can copy/paste questions from Associate role and adjust ideal ratings
+- For multiselect, just list options with dashes (-)
+- When done, tell me and I'll convert this to code!
+================================================================================

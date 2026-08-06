@@ -1,0 +1,1811 @@
+import { useState, useEffect } from 'react'
+import { Rocket, ArrowRight, ArrowLeft, Download, CheckCircle2, Sparkles, Target, Users } from 'lucide-react'
+import jsPDF from 'jspdf'
+import Button from './Button'
+import Card from './Card'
+import Badge from './Badge'
+import { roleBasedQuestions } from '../data/roleQuestions'
+import { calculateXP, calculateReadinessScore, getSkillName, getCareerLevel, getNextCareerLevel, CAREER_LEVELS } from '../utils/scoreCalculations'
+
+interface FormData {
+  // Step 1: Career Aspirations
+  careerGrowth: string
+  futureVision: string
+  growthAreas: string[]
+  
+  // Track selection removed - all skills assessed for everyone
+  
+  // Step 3: Self Assessment
+  skillRatings: Record<string, { rating: number; example: string }>
+  multiSelectResponses: Record<string, string[]> // For multiselect questions (question -> selected options)
+  
+  // Step 4: Superpowers
+  strengths: string[]
+  teammatesFeedback: string
+  proudAccomplishment: string
+  
+  // Step 5: Growth Opportunities
+  skillsToImprove: string[]
+  growthLimits: string[]
+  learningStyle: string[]
+  
+  // Step 6: Community
+  teachingTopic: string
+  mentorInterest: string
+  
+  // Step 7: Commitment
+  sixMonthGoal: string
+  goalImportance: string
+  
+  // Personal Info
+  name: string
+  agid: string
+  email: string
+  currentRole: string
+}
+
+const initialFormData: FormData = {
+  careerGrowth: '',
+  futureVision: '',
+  growthAreas: [],
+  skillRatings: {},
+  multiSelectResponses: {},
+  strengths: [],
+  teammatesFeedback: '',
+  proudAccomplishment: '',
+  skillsToImprove: [],
+  growthLimits: [],
+  learningStyle: [],
+  teachingTopic: '',
+  mentorInterest: '',
+  sixMonthGoal: '',
+  goalImportance: '',
+  name: '',
+  agid: '',
+  email: '',
+  currentRole: 'Associate UX Designer',
+}
+
+const careerOptions = [
+  'UX Specialist',
+  'Senior UX Designer',
+  'Lead Designer',
+  'Design Manager',
+  'Product Strategist',
+  'Design Researcher',
+  'Design Systems Specialist',
+  'Not Sure Yet',
+]
+
+const futureVisionOptions = [
+  'Growing into my next role',
+  'Becoming a domain expert',
+  'Leading projects',
+  'Leading teams',
+  'Driving product strategy',
+  'Influencing business decisions',
+]
+
+const growthAreasOptions = [
+  'Research',
+  'Strategy',
+  'Communication',
+  'Accessibility',
+  'Leadership',
+  'AI for Design',
+  'Business Acumen',
+  'Stakeholder Management',
+  'Design Systems',
+  'Product Thinking',
+  'Data & Analytics',
+]
+
+const skillCategories = [
+  {
+    category: 'Design Craft',
+    description: 'Core design skills that shape how you create and deliver user experiences—from visual aesthetics to interaction patterns and technical implementation.',
+    skills: [
+      'Interaction Design',
+      'Visual Design',
+      'Information Architecture',
+      'Design Systems',
+      'Accessibility',
+      'Prototyping',
+      'Responsive Design',
+      'Data Visualization',
+      'Design Quality Review',
+    ],
+  },
+  {
+    category: 'Leadership & Team Growth',
+    description: 'Skills for guiding, developing, and empowering others—essential for growing into senior IC or management roles.',
+    skills: [
+      'Mentoring',
+      'Team Development',
+      'Design Critique Leadership',
+      'Decision Making',
+      'Delegation',
+      'Change Management',
+      'Recruiting & Interviewing',
+      'Capability Building',
+    ],
+  },
+  {
+    category: 'AI & Future Skills',
+    description: 'Emerging capabilities for leveraging AI tools and designing AI-powered experiences—critical for staying competitive in the evolving design landscape.',
+    skills: [
+      'AI for UX',
+      'Prompt Design',
+      'AI-Assisted Research',
+      'AI-Assisted Prototyping',
+      'Designing AI Experiences',
+      'Automation Mindset',
+    ],
+  },
+  {
+    category: 'Collaboration & Influence',
+    description: 'Interpersonal skills for working effectively across teams, communicating design value, and driving alignment with stakeholders.',
+    skills: [
+      'Stakeholder Management',
+      'Storytelling',
+      'Presentation Skills',
+      'Cross-Functional Collaboration',
+      'Negotiation & Conflict Resolution',
+      'Feedback Giving',
+      'Receiving Feedback',
+    ],
+  },
+  {
+    category: 'User Research & Problem Solving',
+    description: 'Methods for understanding user needs, validating solutions, and framing problems—the foundation of user-centered design.',
+    skills: [
+      'UX Research Planning',
+      'Interviewing',
+      'Usability Testing',
+      'Journey Mapping',
+      'Problem Framing',
+      'Metrics & KPI Understanding',
+    ],
+  },
+]
+
+const ratingLabels = [
+  { rating: 1, label: 'Beginner', description: 'Just starting to learn this skill' },
+  { rating: 2, label: 'Developing', description: 'Building competency with guidance' },
+  { rating: 3, label: 'Competent', description: 'Can perform independently' },
+  { rating: 4, label: 'Proficient', description: 'Consistently strong performance' },
+  { rating: 5, label: 'Expert', description: 'Master level, can teach others' },
+]
+
+const strengthsOptions = [
+  'User Research',
+  'Visual Design',
+  'Interaction Design',
+  'Communication',
+  'Storytelling',
+  'Facilitation',
+  'Accessibility',
+  'Systems Thinking',
+  'Strategic Thinking',
+  'Collaboration',
+  'Leadership',
+  'Problem Solving',
+  'Data Analysis',
+]
+
+const growthLimitsOptions = [
+  'Need more experience',
+  'Need coaching',
+  'Need mentorship',
+  'Need project exposure',
+  'Need stakeholder visibility',
+  'Need structured learning',
+  'Need confidence',
+  'Need leadership opportunities',
+  'Time constraints',
+]
+
+const learningStyleOptions = [
+  'Workshops',
+  'Mentorship',
+  'Peer Learning',
+  'Online Courses',
+  'Self Learning',
+  'Hands-on Projects',
+  'Shadowing',
+  'External Speakers',
+]
+
+const masterSteps = [
+  { number: 1, icon: '🎯', title: 'Skills Assessment', description: 'Rate your proficiency across 5 key areas' },
+  { number: 2, icon: '✨', title: 'Superpowers', description: 'Celebrate what makes you exceptional' },
+  { number: 3, icon: '📈', title: 'Growth Goals', description: 'Identify areas to level up' },
+  { number: 4, icon: '🤝', title: 'Community', description: 'How you want to give back' },
+  { number: 5, icon: '🚀', title: 'Career Vision', description: 'Paint a picture of your future' },
+  { number: 6, icon: '📊', title: 'Your Journey', description: 'View your personalized roadmap' },
+]
+
+// Career levels with icons and descriptions for UI display
+const careerLevelDisplay = [
+  { level: 'Explorer', icon: '🧭', description: 'Learning foundations and building confidence.' },
+  { level: 'Builder', icon: '🛠', description: 'Applying skills independently and contributing consistently.' },
+  { level: 'Influencer', icon: '🚀', description: 'Driving impact and supporting others.' },
+  { level: 'Strategist', icon: '🎯', description: 'Connecting customer needs, design decisions, and business outcomes.' },
+  { level: 'Catalyst', icon: '🏆', description: 'Creating organizational impact and helping others grow.' },
+]
+
+const getLevelDisplay = (levelName: string) => {
+  return careerLevelDisplay.find(l => l.level === levelName) || careerLevelDisplay[0]
+}
+
+// AI Insights Component
+const AIInsights = ({ step, formData }: { step: number; formData: FormData }) => {
+  const getInsights = () => {
+    // Shared variables
+    const wantsToMentor = formData.mentorInterest === 'Yes, I\'d love to mentor'
+    
+    switch (step) {
+      case 2: // Superpowers
+        const strengthCount = formData.strengths.length
+        return {
+          title: '💡 Strength Insights',
+          insights: [
+            strengthCount === 0 
+              ? 'Select your top 3 strengths - these are skills where you naturally excel and feel energized.'
+              : strengthCount < 3
+              ? `Great start! Add ${3 - strengthCount} more strength${3 - strengthCount > 1 ? 's' : ''} to complete this section.`
+              : '✨ Excellent! Your strengths form the foundation of your unique value proposition.',
+            formData.strengths.includes('Visual Design') && formData.strengths.includes('Prototyping')
+              ? '🎨 Your design craft strengths suggest a strong IC (Individual Contributor) path.'
+              : formData.strengths.includes('Stakeholder Management') || formData.strengths.includes('Mentoring')
+              ? '👥 Your people-focused strengths indicate potential for leadership roles.'
+              : 'Your combination of strengths opens multiple career paths.',
+            formData.teammatesFeedback
+              ? '📝 Teammate feedback helps validate your self-perception and reveals blind spots.'
+              : '💬 Teammate feedback is valuable - it shows how others experience your impact.',
+          ],
+          tips: [
+            '🎯 Focus on strengths that energize you, not just what you\'re good at',
+            '🔄 Your strengths should complement each other',
+            '💼 Think about how these strengths serve your career goals',
+          ]
+        }
+      
+      case 3: // Growth Goals
+        const growthCount = formData.skillsToImprove.length
+        const hasLearningStyle = formData.learningStyle.length > 0
+        return {
+          title: '🚀 Growth Strategy',
+          insights: [
+            growthCount === 0
+              ? 'Identify 3 skills that will unlock your next career milestone.'
+              : growthCount < 3
+              ? `${growthCount}/3 skills selected. Choose areas that align with your career aspirations.`
+              : '✅ Great selection! Focus on 3 skills to avoid spreading yourself too thin.',
+            formData.skillsToImprove.includes('AI for Design')
+              ? '🤖 AI skills are increasingly critical - you\'re future-proofing your career.'
+              : 'Consider adding emerging skills like AI to stay competitive.',
+            hasLearningStyle
+              ? `📚 Your learning style (${formData.learningStyle.join(', ')}) will guide your development plan.`
+              : '🎓 Knowing how you learn best helps you choose effective resources.',
+            formData.skillsToImprove.some(s => ['Leadership', 'Stakeholder Management', 'Communication'].includes(s))
+              ? '👔 Soft skills often differentiate senior practitioners from juniors.'
+              : '',
+          ].filter(Boolean),
+          tips: [
+            '⚡ Pick skills that compound - each should build on your strengths',
+            '📈 Balance technical and soft skills for well-rounded growth',
+            '🎯 Align growth areas with your 6-month career goal',
+          ]
+        }
+      
+      case 4: // Community
+        const hasMentorInterest = formData.mentorInterest !== ''
+        return {
+          title: '🤝 Community Impact',
+          insights: [
+            formData.teachingTopic
+              ? `📢 Teaching "${formData.teachingTopic}" reinforces your own mastery.`
+              : '💡 Teaching others is one of the best ways to deepen your own expertise.',
+            wantsToMentor
+              ? '🌟 Mentoring builds leadership skills and expands your network.'
+              : hasMentorInterest
+              ? '🤔 Mentoring can start small - even 30 min/month makes an impact.'
+              : '👥 Community contribution accelerates your visibility and influence.',
+            formData.teachingTopic && formData.strengths.includes(formData.teachingTopic)
+              ? '✨ Teaching your strengths creates a powerful feedback loop.'
+              : '',
+          ].filter(Boolean),
+          tips: [
+            '🎤 Start with brown bags or lunch & learns',
+            '📝 Document your knowledge in wikis or case studies',
+            '🌱 Giving back often leads to unexpected opportunities',
+          ]
+        }
+      
+      case 5: // Career Vision - Gap Analysis
+        const skillRatingsCount = Object.keys(formData.skillRatings).length
+        const avgRating = skillRatingsCount > 0 
+          ? Object.values(formData.skillRatings).reduce((sum, s) => sum + s.rating, 0) / skillRatingsCount 
+          : 0
+        
+        // Analyze career path alignment
+        const isLeadershipPath = formData.careerGrowth?.includes('Manager') || formData.careerGrowth?.includes('Lead')
+        const hasLeadershipSkills = formData.strengths.some(s => 
+          ['Stakeholder Management', 'Mentoring', 'Strategic Thinking'].includes(s)
+        )
+        const isGrowingLeadershipSkills = formData.skillsToImprove.some(s => 
+          ['Leadership', 'Stakeholder Management', 'Communication'].includes(s)
+        )
+        
+        const isSpecialistPath = formData.careerGrowth?.includes('Specialist') || formData.careerGrowth?.includes('Strategist')
+        const hasSpecialistSkills = formData.strengths.some(s => 
+          ['User Research', 'Visual Design', 'Prototyping', 'Information Architecture'].includes(s)
+        )
+        
+        // Identify gaps
+        const gaps = []
+        if (isLeadershipPath && !hasLeadershipSkills && !isGrowingLeadershipSkills) {
+          gaps.push('Leadership & people management skills')
+        }
+        if (isSpecialistPath && !hasSpecialistSkills) {
+          gaps.push('Deep specialist expertise in your domain')
+        }
+        if (formData.futureVision?.includes('business') && !formData.skillsToImprove.includes('Business Acumen')) {
+          gaps.push('Business acumen & strategy')
+        }
+        if (avgRating < 3 && (isLeadershipPath || isSpecialistPath)) {
+          gaps.push('Overall skill proficiency (current avg: ' + avgRating.toFixed(1) + '/5)')
+        }
+        
+        return {
+          title: '🎯 Gap Analysis',
+          insights: [
+            formData.careerGrowth
+              ? `🚀 Target Role: ${formData.careerGrowth}`
+              : '📍 Select your target role to see personalized gap analysis.',
+            isLeadershipPath && hasLeadershipSkills
+              ? '✅ Your leadership strengths align well with your management aspirations.'
+              : isLeadershipPath && isGrowingLeadershipSkills
+              ? '📈 Good! You\'re actively developing leadership skills for your target role.'
+              : isLeadershipPath
+              ? '⚠️ Consider adding leadership skills to your growth plan for management roles.'
+              : '',
+            isSpecialistPath && hasSpecialistSkills
+              ? '✅ Your specialist strengths support your career direction.'
+              : isSpecialistPath
+              ? '💡 Deepen your specialist expertise to stand out in this path.'
+              : '',
+            gaps.length === 0 && formData.careerGrowth
+              ? '🎉 Strong alignment! Your skills and growth plan support your aspirations.'
+              : gaps.length > 0
+              ? `⚠️ ${gaps.length} gap${gaps.length > 1 ? 's' : ''} identified - see recommendations below.`
+              : '',
+            formData.futureVision?.includes('Leading') && !wantsToMentor
+              ? '💭 Consider mentoring to build leadership experience.'
+              : '',
+          ].filter(Boolean),
+          tips: gaps.length > 0 
+            ? [
+                '🔍 Key Gaps to Address:',
+                ...gaps.map(gap => `  • ${gap}`),
+                '',
+                '💡 Recommended Actions:',
+                isLeadershipPath && !hasLeadershipSkills 
+                  ? '  • Add "Leadership" or "Stakeholder Management" to growth goals'
+                  : '',
+                avgRating < 3 
+                  ? '  • Focus on raising proficiency in core skills to 3+ level'
+                  : '',
+                '  • Align your learning style with skill development needs',
+                '  • Leverage your strengths while closing critical gaps',
+              ].filter(Boolean)
+            : [
+                '✨ You\'re well-positioned for your target role!',
+                '🎯 Continue developing your selected growth areas',
+                '🤝 Leverage community contributions for visibility',
+                '📚 Stay current with industry trends and emerging skills',
+              ]
+        }
+      
+      default:
+        return null
+    }
+  }
+
+  const content = getInsights()
+  if (!content) return null
+
+  return (
+    <div className="sticky top-8 space-y-4">
+      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200">
+        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+          {content.title}
+        </h3>
+        <div className="space-y-3">
+          {content.insights.map((insight, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 flex-shrink-0" />
+              <p className="text-xs text-slate-700 leading-relaxed">{insight}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-200">
+        <h3 className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Quick Tips</h3>
+        <div className="space-y-2">
+          {content.tips.map((tip, index) => (
+            <p key={index} className="text-xs text-slate-600 leading-relaxed">{tip}</p>
+          ))}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// Integrated Progress Sidebar Component
+const ProgressSidebar = ({ currentStep, currentCategory, skillCategories, onStepClick }: { 
+  currentStep: number
+  currentCategory?: number
+  skillCategories?: Array<{ category: string; description: string; skills: Array<string | { name: string; idealRating: number }>; isScored?: boolean }>
+  onStepClick: (step: number) => void
+}) => {
+  return (
+    <div className="sticky top-8">
+      <h3 className="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wide">Your Progress</h3>
+      <div className="space-y-1">
+        {masterSteps.map((step, index) => {
+          const stepNumber = index + 1
+          const isCompleted = stepNumber < currentStep
+          const isCurrent = stepNumber === currentStep
+          
+          return (
+            <div key={step.number}>
+              {/* Main Step */}
+              <div className="relative">
+                <button
+                  onClick={() => onStepClick(stepNumber)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-lg transition-all text-left hover:bg-slate-50 ${
+                    isCurrent ? 'bg-growth-50 border-l-4 border-growth-500' : ''
+                  }`}>
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 transition-all ${
+                      isCompleted
+                        ? 'bg-growth-600 text-white'
+                        : isCurrent
+                        ? 'bg-growth-500 text-white ring-2 ring-growth-200'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {isCompleted ? '✓' : step.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold leading-tight ${
+                      isCurrent ? 'text-slate-800' : isCompleted ? 'text-slate-700' : 'text-slate-500'
+                    }`}>
+                      {step.title}
+                    </p>
+                    {isCurrent && (
+                      <p className="text-xs text-slate-500 mt-1">{step.description}</p>
+                    )}
+                  </div>
+                </button>
+
+                {/* Sub-steps for Skills Assessment */}
+                {stepNumber === 1 && isCurrent && skillCategories && (
+                  <div className="ml-8 mt-2 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                    {skillCategories.map((cat, catIndex) => {
+                      const isCurrentCategory = catIndex === currentCategory
+                      const isCompletedCategory = catIndex < (currentCategory || 0)
+                      
+                      return (
+                        <div
+                          key={cat.category}
+                          className={`flex items-center gap-2 py-2 px-3 rounded-md transition-all ${
+                            isCurrentCategory ? 'bg-white border border-growth-300' : ''
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
+                              isCompletedCategory
+                                ? 'bg-growth-400 text-white'
+                                : isCurrentCategory
+                                ? 'bg-growth-500 text-white'
+                                : 'bg-slate-100 text-slate-400'
+                            }`}
+                          >
+                            {isCompletedCategory ? '✓' : catIndex + 1}
+                          </div>
+                          <p className={`text-xs ${
+                            isCurrentCategory ? 'font-semibold text-slate-800' : 'text-slate-600'
+                          }`}>
+                            {cat.category}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Connecting Line */}
+                {index < masterSteps.length - 1 && (
+                  <div className={`w-0.5 h-4 ml-[13px] my-1 ${
+                    isCompleted ? 'bg-growth-600' : 'bg-slate-200'
+                  }`} />
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default function UXGrowthJourney() {
+  // Load saved data from localStorage on mount
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = localStorage.getItem('uxGrowthJourney_currentStep')
+    return saved ? parseInt(saved) : 0
+  })
+  const [currentCategory, setCurrentCategory] = useState(0)
+  const [formData, setFormData] = useState<FormData>(() => {
+    const saved = localStorage.getItem('uxGrowthJourney_formData')
+    if (saved) {
+      const parsedData = JSON.parse(saved)
+      // Ensure currentRole has a valid value
+      if (!parsedData.currentRole || parsedData.currentRole === '') {
+        parsedData.currentRole = 'Associate UX Designer'
+      }
+      return parsedData
+    }
+    return initialFormData
+  })
+  const [showResults, setShowResults] = useState(false)
+  const [showAchievement, setShowAchievement] = useState(false)
+  const [achievementTitle, setAchievementTitle] = useState('')
+  const [previousXP, setPreviousXP] = useState(0)
+
+  // Auto-save to localStorage whenever formData changes
+  useEffect(() => {
+    localStorage.setItem('uxGrowthJourney_formData', JSON.stringify(formData))
+  }, [formData])
+
+  // Save current step to localStorage
+  useEffect(() => {
+    localStorage.setItem('uxGrowthJourney_currentStep', currentStep.toString())
+  }, [currentStep])
+
+  // Scroll to top whenever step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentStep])
+
+  // Scroll to top whenever category changes (for Skills Assessment sub-steps)
+  useEffect(() => {
+    if (currentStep === 1) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [currentCategory, currentStep])
+
+  const updateFormData = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  // Handle step navigation from sidebar
+  const handleStepClick = (step: number) => {
+    setCurrentStep(step)
+    setCurrentCategory(0) // Reset category when changing steps
+  }
+
+  // Get role configuration
+  const getRoleConfig = () => {
+    return roleBasedQuestions[formData.currentRole] || roleBasedQuestions["Associate UX Designer"]
+  }
+
+  // Check for level up - must be at top level
+  const currentXP = formData.currentRole ? calculateXP(formData.skillRatings, getRoleConfig(), formData.currentRole) : 0
+  useEffect(() => {
+    if (currentXP !== previousXP) {
+      if (currentXP > previousXP && previousXP > 0) {
+        const prevLevel = getCareerLevel(previousXP)
+        const newLevel = getCareerLevel(currentXP)
+        const prevLevelIndex = CAREER_LEVELS.findIndex(l => l.level === prevLevel.level)
+        const newLevelIndex = CAREER_LEVELS.findIndex(l => l.level === newLevel.level)
+        if (newLevelIndex > prevLevelIndex) {
+          const levelDisplay = getLevelDisplay(newLevel.level)
+          setAchievementTitle(`${levelDisplay.icon} ${newLevel.level}`)
+          setShowAchievement(true)
+          setTimeout(() => setShowAchievement(false), 4000)
+        }
+      }
+      setPreviousXP(currentXP)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentXP])
+
+  const toggleArrayItem = (field: keyof FormData, item: string) => {
+    const currentArray = formData[field] as string[]
+    updateFormData(
+      field,
+      currentArray.includes(item)
+        ? currentArray.filter((i) => i !== item)
+        : [...currentArray, item]
+    )
+  }
+
+  const resetForm = () => {
+    if (confirm('Are you sure you want to start over? All your progress will be lost.')) {
+      localStorage.removeItem('uxGrowthJourney_formData')
+      localStorage.removeItem('uxGrowthJourney_currentStep')
+      setFormData(initialFormData)
+      setCurrentStep(0)
+      setCurrentCategory(0)
+      setShowResults(false)
+    }
+  }
+
+  const nextStep = () => {
+    if (currentStep < 6) setCurrentStep(currentStep + 1)
+  }
+
+  const prevStep = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1)
+  }
+
+  // Check if all required fields are filled
+  const isFormComplete = () => {
+    // Step 1: Skills Assessment - at least some skills rated
+    const hasSkillRatings = Object.keys(formData.skillRatings).length > 0
+    
+    // Step 2: Superpowers
+    const hasSuperpowers = formData.strengths.length === 3 && 
+                          formData.teammatesFeedback.trim() !== '' && 
+                          formData.proudAccomplishment.trim() !== ''
+    
+    // Step 3: Growth Opportunities
+    const hasGrowthGoals = formData.skillsToImprove.length === 3 && 
+                          formData.growthLimits.length > 0 && 
+                          formData.learningStyle.length > 0
+    
+    // Step 4: Community
+    const hasCommunity = formData.teachingTopic.trim() !== '' && 
+                        formData.mentorInterest !== ''
+    
+    // Step 5: Career Aspirations
+    const hasCareerVision = formData.careerGrowth !== '' && 
+                           formData.futureVision !== '' && 
+                           formData.growthAreas.length > 0
+    
+    return hasSkillRatings && hasSuperpowers && hasGrowthGoals && hasCommunity && hasCareerVision
+  }
+
+  const getIncompleteSteps = () => {
+    const incomplete = []
+    
+    if (Object.keys(formData.skillRatings).length === 0) {
+      incomplete.push({ step: 1, name: 'Skills Assessment', reason: 'Rate your skills across all categories' })
+    }
+    
+    if (formData.strengths.length !== 3 || !formData.teammatesFeedback || !formData.proudAccomplishment) {
+      incomplete.push({ step: 2, name: 'Superpowers', reason: 'Complete all fields about your strengths' })
+    }
+    
+    if (formData.skillsToImprove.length !== 3 || formData.growthLimits.length === 0 || formData.learningStyle.length === 0) {
+      incomplete.push({ step: 3, name: 'Growth Goals', reason: 'Select skills to improve and learning preferences' })
+    }
+    
+    if (!formData.teachingTopic || !formData.mentorInterest) {
+      incomplete.push({ step: 4, name: 'Community', reason: 'Share how you want to contribute' })
+    }
+    
+    if (!formData.careerGrowth || !formData.futureVision || formData.growthAreas.length === 0) {
+      incomplete.push({ step: 5, name: 'Career Vision', reason: 'Define your career aspirations' })
+    }
+    
+    return incomplete
+  }
+
+  const handleSubmit = () => {
+    if (isFormComplete()) {
+      setShowResults(true)
+    } else {
+      // User will see the incomplete notification on step 6
+      setCurrentStep(6)
+    }
+  }
+
+  const generatePDF = () => {
+    const doc = new jsPDF()
+    let yPos = 20
+
+    doc.setFontSize(20)
+    doc.text('🚀 My UX Growth Journey', 20, yPos)
+    yPos += 15
+
+    doc.setFontSize(12)
+    doc.text(`Name: ${formData.name}`, 20, yPos)
+    yPos += 10
+    doc.text(`Email: ${formData.email}`, 20, yPos)
+    yPos += 10
+    doc.text(`Role: ${formData.currentRole}`, 20, yPos)
+    yPos += 15
+
+    doc.setFontSize(14)
+    doc.text('Career Aspirations', 20, yPos)
+    yPos += 10
+    doc.setFontSize(10)
+    doc.text(`Career Growth: ${formData.careerGrowth}`, 20, yPos)
+    yPos += 7
+    doc.text(`Future Vision: ${formData.futureVision}`, 20, yPos)
+    yPos += 7
+    doc.text(`Growth Areas: ${formData.growthAreas.join(', ')}`, 20, yPos)
+    yPos += 15
+
+    doc.setFontSize(14)
+    doc.text('Top Strengths', 20, yPos)
+    yPos += 10
+    doc.setFontSize(10)
+    doc.text(formData.strengths.join(', '), 20, yPos)
+    yPos += 15
+
+    doc.setFontSize(14)
+    doc.text('Skills to Improve', 20, yPos)
+    yPos += 10
+    doc.setFontSize(10)
+    doc.text(formData.skillsToImprove.join(', '), 20, yPos)
+    yPos += 15
+
+    doc.setFontSize(14)
+    doc.text('6-Month Goal', 20, yPos)
+    yPos += 10
+    doc.setFontSize(10)
+    const goalLines = doc.splitTextToSize(formData.sixMonthGoal, 170)
+    doc.text(goalLines, 20, yPos)
+
+    doc.save(`UX_Growth_Summary_${formData.name.replace(/\s+/g, '_')}.pdf`)
+  }
+
+  // Results Page - Check this FIRST before any step checks
+  if (showResults) {
+    const totalXP = currentXP
+    const currentLevel = getCareerLevel(totalXP)
+    const nextLevel = getNextCareerLevel(totalXP)
+    const currentLevelDisplay = getLevelDisplay(currentLevel.level)
+    const progressToNext = nextLevel 
+      ? ((totalXP - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100
+      : 100
+
+    return (
+      <div className="min-h-screen bg-slate-50 py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="w-12 h-12 text-achievement-600" />
+              <h1 className="text-4xl font-bold gradient-text">Your UX Growth Journey</h1>
+            </div>
+            <p className="text-xl text-slate-600">
+              Here's your personalized growth roadmap, {formData.name}!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Career Level Card */}
+            <Card>
+              <div className="text-center">
+                <div className="text-6xl mb-4">{currentLevelDisplay.icon}</div>
+                <h2 className="text-3xl font-bold text-slate-800 mb-2">{currentLevel.level}</h2>
+                <p className="text-slate-600 mb-4">{currentLevelDisplay.description}</p>
+                <div className="bg-slate-100 rounded-full h-3 mb-2">
+                  <div 
+                    className="bg-gradient-to-r from-growth-500 to-achievement-500 h-3 rounded-full transition-all"
+                    style={{ width: `${progressToNext}%` }}
+                  />
+                </div>
+                <p className="text-sm text-slate-600">
+                  {totalXP} XP {nextLevel ? `• ${nextLevel.minXP - totalXP} XP to ${nextLevel.level}` : '• Max Level!'}
+                </p>
+              </div>
+            </Card>
+
+            {/* Role & XP Card */}
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Your Profile</h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-slate-600">Role</p>
+                  <p className="font-bold text-slate-800">{formData.currentRole}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Total Career XP</p>
+                  <p className="font-bold text-slate-800 text-2xl">{totalXP} XP</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Career Aspiration</p>
+                  <p className="font-bold text-slate-800">{formData.careerGrowth}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Top Strengths */}
+          <Card className="mb-6">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span>✨</span>
+              Your Superpowers
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              {formData.strengths.map((strength, index) => (
+                <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-lg border-2 border-purple-200">
+                  <p className="font-bold text-slate-800">{strength}</p>
+                </div>
+              ))}
+            </div>
+            {formData.proudAccomplishment && (
+              <div className="mt-6 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+                <p className="text-sm font-bold text-slate-700 mb-2">🏆 Proud Accomplishment</p>
+                <p className="text-slate-700">{formData.proudAccomplishment}</p>
+              </div>
+            )}
+          </Card>
+
+          {/* Growth Areas */}
+          <Card className="mb-6">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span>📈</span>
+              Growth Opportunities
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              {formData.skillsToImprove.map((skill, index) => (
+                <div key={index} className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-lg border-2 border-green-200">
+                  <p className="font-bold text-slate-800">{skill}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* 6-Month Goal */}
+          {formData.sixMonthGoal && (
+            <Card className="mb-6">
+              <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span>🎯</span>
+                Your 6-Month Goal
+              </h3>
+              <p className="text-lg text-slate-700 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-lg border-2 border-orange-200">
+                {formData.sixMonthGoal}
+              </p>
+            </Card>
+          )}
+
+          {/* Community Contribution */}
+          <Card className="mb-6">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span>🤝</span>
+              Community Contribution
+            </h3>
+            <div className="space-y-4">
+              {formData.teachingTopic && (
+                <div>
+                  <p className="text-sm font-bold text-slate-600 mb-1">What I Can Teach</p>
+                  <p className="text-slate-800">{formData.teachingTopic}</p>
+                </div>
+              )}
+              {formData.mentorInterest && (
+                <div>
+                  <p className="text-sm font-bold text-slate-600 mb-1">Mentorship Interest</p>
+                  <p className="text-slate-800">{formData.mentorInterest}</p>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4 mt-8">
+            <Button variant="outline" onClick={() => setShowResults(false)}>
+              Back to Assessment
+            </Button>
+            <Button onClick={() => window.print()}>
+              Print Summary
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 0: Welcome Page
+  if (currentStep === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="text-6xl mb-6">🚀</div>
+            <h1 className="text-5xl font-bold text-slate-800 mb-4">Welcome to Your UX Growth Journey</h1>
+            <p className="text-xl text-slate-600">
+              Discover your strengths, set goals, and unlock your career potential
+            </p>
+          </div>
+
+          <Card className="mb-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">Let's get started!</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => updateFormData('name', e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                  placeholder="Enter your name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">AGID</label>
+                <input
+                  type="text"
+                  value={formData.agid || ''}
+                  onChange={(e) => updateFormData('agid', e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                  placeholder="Enter your AGID"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateFormData('email', e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                  placeholder="Enter your email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Role</label>
+                <select
+                  value={formData.currentRole}
+                  onChange={(e) => updateFormData('currentRole', e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                >
+                  <option value="">Choose your role...</option>
+                  <option value="Associate UX Designer">Associate UX Designer</option>
+                  <option value="UX Designer">UX Designer</option>
+                  <option value="Senior UX Designer">Senior UX Designer</option>
+                  <option value="Lead UX Designer">Lead UX Designer</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Button
+                onClick={() => setCurrentStep(1)}
+                disabled={!formData.currentRole || !formData.name || !formData.email}
+                size="lg"
+              >
+                Start Your Journey
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 1: Skills Assessment
+  if (currentStep === 1) {
+    const roleConfig = getRoleConfig()
+    const category = roleConfig.skillCategories[currentCategory]
+    const currentCategorySkills = category.skills
+    
+    const allCurrentCategoryRated = category.questionType === 'multiselect'
+      ? category.multiSelectQuestions?.every((q) => {
+          const responses = formData.multiSelectResponses?.[q.question]
+          return responses && responses.length > 0
+        }) ?? true
+      : currentCategorySkills.every((skill) => {
+          const skillName = getSkillName(skill)
+          return formData.skillRatings[skillName]?.rating
+        })
+    
+    const currentLevel = getCareerLevel(currentXP)
+    const nextLevel = getNextCareerLevel(currentXP)
+    const progressToNext = nextLevel ? ((currentXP - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100 : 100
+    const remainingXP = nextLevel ? nextLevel.minXP - currentXP : 0
+    const currentLevelDisplay = getLevelDisplay(currentLevel.level)
+
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        {/* Achievement Notification */}
+        {showAchievement && (
+          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <Card className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 border-4 border-yellow-300 shadow-2xl">
+              <div className="text-center py-6 px-8">
+                <div className="text-6xl mb-3">🎉</div>
+                <h3 className="text-2xl font-bold text-white mb-2">Achievement Unlocked!</h3>
+                <p className="text-lg text-white font-semibold">{achievementTitle}</p>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            {/* Left Sidebar - Integrated Progress */}
+            <div className="col-span-2">
+              <ProgressSidebar 
+                currentStep={1} 
+                currentCategory={currentCategory}
+                skillCategories={roleConfig.skillCategories}
+                onStepClick={handleStepClick}
+              />
+            </div>
+
+            {/* Center - Main Content */}
+            <div className="col-span-7">
+              <Card className="mb-6 border-2 border-slate-300">
+                <div className="mb-6 pb-4 border-b-2 border-slate-200">
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-growth-400 to-growth-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                      {currentCategory + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-slate-800 mb-1">{category.category}</h2>
+                      <p className="text-sm text-slate-600">
+                        {category.questionType === 'multiselect' 
+                          ? 'Select your responses for each question below' 
+                          : 'Rate your proficiency level for each skill below'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-slate-600">Category Progress</p>
+                      <p className="text-2xl font-bold text-growth-600">
+                        {category.questionType === 'multiselect'
+                          ? `${category.multiSelectQuestions?.filter(q => {
+                              const responses = formData.multiSelectResponses?.[q.question]
+                              return responses && responses.length > 0
+                            }).length || 0}/${category.multiSelectQuestions?.length || 0}`
+                          : `${currentCategorySkills.filter(s => formData.skillRatings[getSkillName(s)]?.rating).length}/${currentCategorySkills.length}`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    {category.description}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Debug Info */}
+                  {category.questionType === 'multiselect' && !category.multiSelectQuestions && (
+                    <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                      <p className="text-yellow-800">No multiselect questions found for this category.</p>
+                    </div>
+                  )}
+                  
+                  {/* Rating Questions */}
+                  {category.questionType !== 'multiselect' && category.skills.map((skill, index) => {
+                    const skillName = getSkillName(skill)
+                    return (
+                      <div key={skillName} className="group">
+                        <div className="p-4 bg-white rounded-xl border-2 border-slate-200 hover:border-growth-400 hover:shadow-md transition-all">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 font-bold text-sm flex items-center justify-center">
+                              {index + 1}
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-800 flex-1">{skillName}</h4>
+                            {formData.skillRatings[skillName]?.rating && (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="growth" className="text-sm">
+                                  {ratingLabels[formData.skillRatings[skillName].rating - 1].label}
+                          </Badge>
+                          <span className="text-sm font-bold text-purple-600">+{formData.skillRatings[skillName].rating * 5} XP</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() =>
+                            updateFormData('skillRatings', {
+                              ...formData.skillRatings,
+                              [skillName]: { ...formData.skillRatings[skillName], rating },
+                            })
+                          }
+                          className={`flex-1 h-14 rounded-xl font-bold text-xl transition-all relative overflow-hidden ${
+                            formData.skillRatings[skillName]?.rating === rating
+                              ? 'bg-gradient-to-br from-growth-500 to-growth-700 text-white scale-105 shadow-xl ring-2 ring-growth-300'
+                              : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-2 border-slate-300 hover:border-growth-400'
+                          }`}
+                        >
+                          <span className="relative z-10">{rating}</span>
+                          {formData.skillRatings[skillName]?.rating === rating && (
+                            <div className="absolute inset-0 bg-white opacity-20 animate-pulse" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )})}
+              
+              {/* MultiSelect Questions */}
+              {category.questionType === 'multiselect' && category.multiSelectQuestions?.map((question, qIndex) => (
+                <div key={qIndex} className="group">
+                  <div className="p-4 bg-white rounded-xl border-2 border-slate-200 hover:border-growth-400 hover:shadow-md transition-all">
+                    <div className="mb-3">
+                      <h4 className="text-lg font-bold text-slate-800 mb-3">{question.question}</h4>
+                      <p className="text-sm text-slate-600 mb-3">Select all that apply</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {question.options.map((option) => {
+                        const isSelected = formData.multiSelectResponses?.[question.question]?.includes(option) || false
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => {
+                              const currentSelections = formData.multiSelectResponses?.[question.question] || []
+                              const newSelections = isSelected
+                                ? currentSelections.filter(o => o !== option)
+                                : [...currentSelections, option]
+                              updateFormData('multiSelectResponses', {
+                                ...formData.multiSelectResponses,
+                                [question.question]: newSelections
+                              })
+                            }}
+                            className={`p-3 rounded-lg text-left transition-all ${
+                              isSelected
+                                ? 'bg-gradient-to-br from-growth-500 to-growth-700 text-white font-semibold shadow-md'
+                                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-2 border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+              {/* Navigation */}
+              <div className="flex justify-between mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (currentCategory > 0) {
+                      setCurrentCategory(currentCategory - 1)
+                    } else {
+                      prevStep()
+                    }
+                  }}
+                  size="lg"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Back
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (currentCategory < roleConfig.skillCategories.length - 1) {
+                      setCurrentCategory(currentCategory + 1)
+                    } else {
+                      setCurrentCategory(0)
+                      nextStep()
+                    }
+                  }}
+                  disabled={!allCurrentCategoryRated}
+                  size="lg"
+                >
+                  {currentCategory < roleConfig.skillCategories.length - 1 ? 'Next Category' : 'Continue'}
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Sidebar - XP & Rating Legend */}
+            <div className="col-span-3">
+              <div className="sticky top-8 space-y-6">
+                {/* Career XP Card */}
+                <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300">
+                  <h3 className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Career XP</h3>
+                  <p className="text-5xl font-bold text-purple-600 mb-3">{currentXP}</p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600">Current:</span>
+                      <span className="font-bold text-slate-800">{currentLevelDisplay.icon} {currentLevel.level}</span>
+                    </div>
+                    {nextLevel && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Next:</span>
+                        <span className="font-bold text-slate-800">{getLevelDisplay(nextLevel.level).icon} {nextLevel.level}</span>
+                      </div>
+                    )}
+                  </div>
+                  {nextLevel && (
+                    <>
+                      <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden mb-2">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                          style={{ width: `${Math.min(progressToNext, 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-600 text-center">
+                        {remainingXP} XP until {nextLevel.level}
+                      </p>
+                    </>
+                  )}
+                </Card>
+
+                {/* Rating Scale */}
+                <Card className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="text-2xl">💡</div>
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Rating Scale</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {ratingLabels.map(({ rating, label, description }) => (
+                      <div key={rating} className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center flex-shrink-0">
+                          {rating}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-slate-800">{label}</p>
+                          <p className="text-xs text-slate-600 leading-tight">{description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-green-200">
+                    <p className="text-xs text-slate-600 text-center">💎 <strong>Earn 5 XP</strong> per rating point</p>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 2: Superpowers
+  if (currentStep === 2) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-2">
+              <ProgressSidebar currentStep={2} onStepClick={handleStepClick} />
+            </div>
+            <div className="col-span-7">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Badge variant="achievement" className="mb-4">Step 2 of 6</Badge>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <Sparkles className="w-8 h-8 text-achievement-600" />
+              Discover Your Superpowers
+            </h2>
+            <p className="text-lg text-slate-600">Let's celebrate what you do best</p>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                What are your biggest strengths? <span className="text-sm font-normal text-slate-600">(Choose 3)</span>
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                {strengthsOptions.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.strengths.includes(option)
+                        ? 'border-achievement-500 bg-achievement-50'
+                        : formData.strengths.length >= 3
+                        ? 'border-slate-200 opacity-50 cursor-not-allowed'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.strengths.includes(option)}
+                      onChange={() => toggleArrayItem('strengths', option)}
+                      disabled={formData.strengths.length >= 3 && !formData.strengths.includes(option)}
+                      className="w-5 h-5 text-achievement-600 rounded focus:ring-achievement-500"
+                    />
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                What do teammates usually come to you for?
+              </h3>
+              <textarea
+                value={formData.teammatesFeedback}
+                onChange={(e) => updateFormData('teammatesFeedback', e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                placeholder="Share what others appreciate about your work..."
+              />
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                What accomplishment are you most proud of recently?
+              </h3>
+              <textarea
+                value={formData.proudAccomplishment}
+                onChange={(e) => updateFormData('proudAccomplishment', e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                placeholder="Describe your proudest achievement..."
+              />
+            </Card>
+          </div>
+
+          <div className="flex justify-between mt-8">
+            <Button variant="outline" onClick={prevStep}>
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </Button>
+            <Button
+              onClick={nextStep}
+              disabled={
+                formData.strengths.length !== 3 ||
+                !formData.teammatesFeedback ||
+                !formData.proudAccomplishment
+              }
+            >
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        </div>
+            </div>
+            <div className="col-span-3">
+              <AIInsights step={2} formData={formData} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 3: Growth Opportunities
+  if (currentStep === 3) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-2">
+              <ProgressSidebar currentStep={3} onStepClick={handleStepClick} />
+            </div>
+            <div className="col-span-7">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Badge variant="growth" className="mb-4">Step 3 of 6</Badge>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <Target className="w-8 h-8 text-growth-600" />
+              Future Growth Areas
+            </h2>
+            <p className="text-lg text-slate-600">Identify where you want to develop</p>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                Which skills would you most like to improve? <span className="text-sm font-normal text-slate-600">(Choose 3)</span>
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                {strengthsOptions.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.skillsToImprove.includes(option)
+                        ? 'border-growth-500 bg-growth-50'
+                        : formData.skillsToImprove.length >= 3
+                        ? 'border-slate-200 opacity-50 cursor-not-allowed'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.skillsToImprove.includes(option)}
+                      onChange={() => toggleArrayItem('skillsToImprove', option)}
+                      disabled={formData.skillsToImprove.length >= 3 && !formData.skillsToImprove.includes(option)}
+                      className="w-5 h-5 text-growth-600 rounded focus:ring-growth-500"
+                    />
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                What currently limits your growth?
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">Select all that apply</p>
+              <div className="space-y-3">
+                {growthLimitsOptions.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.growthLimits.includes(option)
+                        ? 'border-growth-500 bg-growth-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.growthLimits.includes(option)}
+                      onChange={() => toggleArrayItem('growthLimits', option)}
+                      className="w-5 h-5 text-growth-600 rounded focus:ring-growth-500"
+                    />
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                How do you learn best?
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">Select all that apply</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                {learningStyleOptions.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.learningStyle.includes(option)
+                        ? 'border-growth-500 bg-growth-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.learningStyle.includes(option)}
+                      onChange={() => toggleArrayItem('learningStyle', option)}
+                      className="w-5 h-5 text-growth-600 rounded focus:ring-growth-500"
+                    />
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex justify-between mt-8">
+            <Button variant="outline" onClick={prevStep}>
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </Button>
+            <Button
+              onClick={nextStep}
+              disabled={
+                formData.skillsToImprove.length !== 3 ||
+                formData.growthLimits.length === 0 ||
+                formData.learningStyle.length === 0
+              }
+            >
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        </div>
+            </div>
+            <div className="col-span-3">
+              <AIInsights step={3} formData={formData} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 4: Community Contribution
+  if (currentStep === 4) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-2">
+              <ProgressSidebar currentStep={4} onStepClick={handleStepClick} />
+            </div>
+            <div className="col-span-7">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Badge variant="leadership" className="mb-4">Step 4 of 6</Badge>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <Users className="w-8 h-8 text-leadership-600" />
+              Share What You Can Teach
+            </h2>
+            <p className="text-lg text-slate-600">Help others grow with your expertise</p>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                Which topic would you love to teach others?
+              </h3>
+              <textarea
+                value={formData.teachingTopic}
+                onChange={(e) => updateFormData('teachingTopic', e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                placeholder="What knowledge or skills could you share with the team?"
+              />
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                Would you be interested in becoming a mentor, workshop facilitator, or subject matter champion?
+              </h3>
+              <div className="space-y-3">
+                {['Yes', 'Maybe Later', 'Not Right Now'].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => updateFormData('mentorInterest', option)}
+                    className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
+                      formData.mentorInterest === option
+                        ? 'border-leadership-500 bg-leadership-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex justify-between mt-8">
+            <Button variant="outline" onClick={prevStep}>
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </Button>
+            <Button
+              onClick={nextStep}
+              disabled={!formData.teachingTopic || !formData.mentorInterest}
+            >
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        </div>
+            </div>
+            <div className="col-span-3">
+              <AIInsights step={4} formData={formData} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 5: Career Aspirations (Moved from Step 2)
+  if (currentStep === 5) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-2">
+              <ProgressSidebar currentStep={5} onStepClick={handleStepClick} />
+            </div>
+            <div className="col-span-7">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Badge variant="growth" className="mb-4">Step 5 of 6</Badge>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">Career Aspirations</h2>
+            <p className="text-lg text-slate-600">Help us understand your career goals</p>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                Where would you like your career to grow?
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                {careerOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => updateFormData('careerGrowth', option)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      formData.careerGrowth === option
+                        ? 'border-growth-500 bg-growth-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                In the next 2 years, where do you see yourself?
+              </h3>
+              <div className="space-y-3">
+                {futureVisionOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => updateFormData('futureVision', option)}
+                    className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
+                      formData.futureVision === option
+                        ? 'border-growth-500 bg-growth-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">
+                Which areas are most important to your future growth?
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">Select all that apply</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                {growthAreasOptions.map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.growthAreas.includes(option)
+                        ? 'border-growth-500 bg-growth-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.growthAreas.includes(option)}
+                      onChange={() => toggleArrayItem('growthAreas', option)}
+                      className="w-5 h-5 text-growth-600 rounded focus:ring-growth-500"
+                    />
+                    <span className="font-medium text-slate-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex justify-between mt-8">
+            <Button variant="outline" onClick={prevStep}>
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </Button>
+            <Button
+              onClick={() => {
+                console.log('Button clicked!')
+                handleSubmit()
+              }}
+              disabled={!formData.careerGrowth || !formData.futureVision || formData.growthAreas.length === 0}
+              size="lg"
+            >
+              View My Growth Journey
+              <Sparkles className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        </div>
+            </div>
+            <div className="col-span-3">
+              <AIInsights step={5} formData={formData} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 6: Incomplete Notification (shown when user tries to view results but hasn't completed all fields)
+  if (currentStep === 6 && !isFormComplete()) {
+    const incompleteSteps = getIncompleteSteps()
+    
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-2">
+              <ProgressSidebar currentStep={6} onStepClick={handleStepClick} />
+            </div>
+            <div className="col-span-10">
+              <div className="max-w-3xl mx-auto">
+                {/* Alert Card */}
+                <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-yellow-50 mb-6">
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">⚠️</div>
+                    <h2 className="text-3xl font-bold text-slate-800 mb-3">Almost There!</h2>
+                    <p className="text-lg text-slate-600 mb-2">
+                      You need to complete all sections before viewing your Growth Journey.
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      Don't worry - your progress has been saved automatically!
+                    </p>
+                  </div>
+                </Card>
+
+                {/* Incomplete Steps List */}
+                <Card>
+                  <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span>📋</span>
+                    Incomplete Sections ({incompleteSteps.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {incompleteSteps.map((item) => (
+                      <button
+                        key={item.step}
+                        onClick={() => handleStepClick(item.step)}
+                        className="w-full flex items-start gap-4 p-4 rounded-lg border-2 border-slate-200 hover:border-growth-500 hover:bg-growth-50 transition-all text-left group"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center flex-shrink-0 group-hover:bg-growth-500 group-hover:text-white transition-all">
+                          {item.step}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-slate-800 mb-1">{item.name}</p>
+                          <p className="text-sm text-slate-600">{item.reason}</p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-growth-600 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Progress Summary */}
+                <Card className="mt-6 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-600 mb-1">Overall Progress</p>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {5 - incompleteSteps.length} of 5 sections complete
+                      </p>
+                    </div>
+                    <div className="text-5xl">
+                      {5 - incompleteSteps.length === 5 ? '🎉' : '💪'}
+                    </div>
+                  </div>
+                  <div className="mt-4 w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-growth-500 to-blue-500 transition-all duration-500"
+                      style={{ width: `${((5 - incompleteSteps.length) / 5) * 100}%` }}
+                    />
+                  </div>
+                </Card>
+
+                {/* Action Button */}
+                <div className="mt-8 text-center">
+                  <Button
+                    onClick={() => handleStepClick(incompleteSteps[0].step)}
+                    size="lg"
+                    className="px-8"
+                  >
+                    Complete {incompleteSteps[0].name}
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
