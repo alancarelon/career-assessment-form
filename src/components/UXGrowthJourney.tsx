@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Rocket, ArrowRight, ArrowLeft, Download, CheckCircle2, Sparkles, Target, Users } from 'lucide-react'
-import jsPDF from 'jspdf'
+import { ArrowRight, ArrowLeft, Sparkles, Target, Users } from 'lucide-react'
 import Button from './Button'
 import Card from './Card'
 import Badge from './Badge'
 import { roleBasedQuestions } from '../data/roleQuestions'
-import { calculateXP, calculateReadinessScore, getSkillName, getCareerLevel, getNextCareerLevel, CAREER_LEVELS } from '../utils/scoreCalculations'
+import { calculateXP, getSkillName, getCareerLevel, getNextCareerLevel, CAREER_LEVELS } from '../utils/scoreCalculations'
 
 interface FormData {
   // Step 1: Career Aspirations
@@ -100,7 +99,8 @@ const growthAreasOptions = [
   'Data & Analytics',
 ]
 
-const skillCategories = [
+// Unused - kept for reference
+/* const skillCategories = [
   {
     category: 'Design Craft',
     description: 'Core design skills that shape how you create and deliver user experiences—from visual aesthetics to interaction patterns and technical implementation.',
@@ -167,7 +167,7 @@ const skillCategories = [
       'Metrics & KPI Understanding',
     ],
   },
-]
+] */
 
 const ratingLabels = [
   { rating: 1, label: 'Beginner', description: 'Just starting to learn this skill' },
@@ -635,7 +635,8 @@ export default function UXGrowthJourney() {
     )
   }
 
-  const resetForm = () => {
+  // Unused - kept for future use
+  /* const resetForm = () => {
     if (confirm('Are you sure you want to start over? All your progress will be lost.')) {
       localStorage.removeItem('uxGrowthJourney_formData')
       localStorage.removeItem('uxGrowthJourney_currentStep')
@@ -644,7 +645,7 @@ export default function UXGrowthJourney() {
       setCurrentCategory(0)
       setShowResults(false)
     }
-  }
+  } */
 
   const nextStep = () => {
     if (currentStep < 6) setCurrentStep(currentStep + 1)
@@ -716,7 +717,8 @@ export default function UXGrowthJourney() {
     }
   }
 
-  const generatePDF = () => {
+  // Unused - kept for future PDF export feature
+  /* const generatePDF = () => {
     const doc = new jsPDF()
     let yPos = 20
 
@@ -765,7 +767,7 @@ export default function UXGrowthJourney() {
     doc.text(goalLines, 20, yPos)
 
     doc.save(`UX_Growth_Summary_${formData.name.replace(/\s+/g, '_')}.pdf`)
-  }
+  } */
 
   // Results Page - Check this FIRST before any step checks
   if (showResults) {
