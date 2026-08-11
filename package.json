@@ -18,7 +18,8 @@
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1",
     "xlsx": "^0.18.5",
-    "jspdf": "^2.5.1"
+    "jspdf": "^2.5.1",
+    "recharts": "^2.10.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

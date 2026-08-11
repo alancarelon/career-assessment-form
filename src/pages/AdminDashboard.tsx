@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award } from 'lucide-react'
+import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
+import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Card from '../components/Card'
 import Button from '../components/Button'
 
@@ -137,6 +138,59 @@ export default function AdminDashboard() {
     return sorted.length > 0 ? sorted[0][0] : 'N/A'
   }
 
+  // Analytics data for charts
+  const getRoleDistribution = () => {
+    const roleCounts: Record<string, number> = {}
+    submissions.forEach(sub => {
+      const role = sub.current_role || 'Unknown'
+      roleCounts[role] = (roleCounts[role] || 0) + 1
+    })
+    return Object.entries(roleCounts).map(([name, value]) => ({ name, value }))
+  }
+
+  const getTopGrowthAreas = () => {
+    const areaCounts: Record<string, number> = {}
+    submissions.forEach(sub => {
+      const areas = sub.growth_areas || []
+      areas.forEach((area: string) => {
+        areaCounts[area] = (areaCounts[area] || 0) + 1
+      })
+    })
+    return Object.entries(areaCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }))
+  }
+
+  const getTopStrengths = () => {
+    const strengthCounts: Record<string, number> = {}
+    submissions.forEach(sub => {
+      const strengths = sub.strengths || []
+      strengths.forEach((strength: string) => {
+        strengthCounts[strength] = (strengthCounts[strength] || 0) + 1
+      })
+    })
+    return Object.entries(strengthCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }))
+  }
+
+  const getLearningStyleDistribution = () => {
+    const styleCounts: Record<string, number> = {}
+    submissions.forEach(sub => {
+      const styles = sub.learning_style || []
+      styles.forEach((style: string) => {
+        styleCounts[style] = (styleCounts[style] || 0) + 1
+      })
+    })
+    return Object.entries(styleCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+  }
+
+  const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -210,6 +264,93 @@ export default function AdminDashboard() {
             </p>
           </Card>
         </div>
+
+        {/* Analytics Charts */}
+        {submissions.length > 0 && (
+          <>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Role Distribution Pie Chart */}
+              <Card>
+                <div className="flex items-center gap-2 mb-4">
+                  <PieChart className="w-5 h-5 text-growth-600" />
+                  <h3 className="text-xl font-bold text-slate-800">Role Distribution</h3>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RechartsPie>
+                    <Pie
+                      data={getRoleDistribution()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {getRoleDistribution().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPie>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Learning Styles Distribution */}
+              <Card>
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-5 h-5 text-growth-600" />
+                  <h3 className="text-xl font-bold text-slate-800">Learning Styles</h3>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={getLearningStyleDistribution()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#10b981" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Top Growth Areas */}
+              <Card>
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-growth-600" />
+                  <h3 className="text-xl font-bold text-slate-800">Top 5 Growth Areas</h3>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={getTopGrowthAreas()} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={150} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Top Strengths */}
+              <Card>
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="w-5 h-5 text-growth-600" />
+                  <h3 className="text-xl font-bold text-slate-800">Top 5 Strengths</h3>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={getTopStrengths()} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={150} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8b5cf6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+          </>
+        )}
 
         <Card>
           <h2 className="text-2xl font-bold text-slate-800 mb-6">Recent Submissions</h2>

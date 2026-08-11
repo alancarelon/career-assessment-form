@@ -10,7 +10,7 @@ CREATE TABLE assessments (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   agid TEXT,
-  current_role TEXT NOT NULL,
+  "current_role" TEXT NOT NULL,
   
   -- Step 1: Career Vision
   career_growth TEXT,
@@ -43,7 +43,7 @@ CREATE TABLE assessments (
 -- Create indexes for better query performance
 CREATE INDEX idx_assessments_email ON assessments(email);
 CREATE INDEX idx_assessments_created_at ON assessments(created_at DESC);
-CREATE INDEX idx_assessments_current_role ON assessments(current_role);
+CREATE INDEX idx_assessments_current_role ON assessments("current_role");
 CREATE INDEX idx_assessments_skill_ratings ON assessments USING GIN (skill_ratings);
 
 -- Enable Row Level Security (RLS)
