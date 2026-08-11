@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.tsx'
 import AdminDashboard from './pages/AdminDashboard.tsx'
+import TestConnection from './pages/TestConnection.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -11,6 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/test" element={<TestConnection />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

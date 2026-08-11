@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS assessments (
   -- Personal Information
   name TEXT NOT NULL,
   email TEXT NOT NULL,
-  current_role TEXT NOT NULL,
+  "current_role" TEXT NOT NULL,
   years_of_experience TEXT NOT NULL,
   
   -- Skills (stored as JSONB for flexibility)
