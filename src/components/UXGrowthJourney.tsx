@@ -738,7 +738,7 @@ export default function UXGrowthJourney() {
           },
           short_term_goals: formData.sixMonthGoal || '',
           long_term_goals: formData.careerGrowth || '',
-          areas_for_growth: formData.areasForGrowth.join(', '),
+          areas_for_growth: formData.growthAreas.join(', '),
           learning_preferences: formData.learningStyle,
           additional_comments: JSON.stringify({
             skillRatings: formData.skillRatings,
