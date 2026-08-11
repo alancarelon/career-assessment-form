@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, RefreshCw, Calendar, Mail, User } from 'lucide-react'
+import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import Card from '../components/Card'
@@ -41,49 +41,43 @@ export default function AdminDashboard() {
         'Submission Date',
         'Name',
         'Email',
+        'AGID',
         'Current Role',
-        'Years of Experience',
-        'User Interviews',
-        'Usability Testing',
-        'Data Analysis',
-        'Research Planning',
-        'Component Libraries',
-        'Design Tokens',
-        'Documentation',
-        'Accessibility',
-        'Team Mentoring',
-        'Project Management',
-        'Stakeholder Communication',
-        'Strategic Thinking',
-        'Short-term Goals',
-        'Long-term Goals',
-        'Areas for Growth',
-        'Learning Preferences',
-        'Additional Comments',
+        'Career Growth',
+        'Future Vision',
+        'Growth Areas',
+        'Strengths',
+        'Teammates Feedback',
+        'Proud Accomplishment',
+        'Skills to Improve',
+        'Growth Limits',
+        'Learning Style',
+        'Teaching Topic',
+        'Mentor Interest',
+        'Six Month Goal',
+        'Goal Importance',
+        'Skill Ratings (JSON)',
       ],
       ...submissions.map((sub) => [
         new Date(sub.created_at!).toLocaleString(),
         sub.name,
         sub.email,
+        sub.agid || '',
         sub.current_role,
-        sub.years_of_experience,
-        sub.ux_research_skills.userInterviews,
-        sub.ux_research_skills.usabilityTesting,
-        sub.ux_research_skills.dataAnalysis,
-        sub.ux_research_skills.researchPlanning,
-        sub.design_systems_skills.componentLibraries,
-        sub.design_systems_skills.designTokens,
-        sub.design_systems_skills.documentation,
-        sub.design_systems_skills.accessibility,
-        sub.leadership_skills.teamMentoring,
-        sub.leadership_skills.projectManagement,
-        sub.leadership_skills.stakeholderCommunication,
-        sub.leadership_skills.strategicThinking,
-        sub.short_term_goals,
-        sub.long_term_goals,
-        sub.areas_for_growth,
-        sub.learning_preferences.join(', '),
-        sub.additional_comments,
+        sub.career_growth || '',
+        sub.future_vision || '',
+        sub.growth_areas?.join(', ') || '',
+        sub.strengths?.join(', ') || '',
+        sub.teammates_feedback || '',
+        sub.proud_accomplishment || '',
+        sub.skills_to_improve?.join(', ') || '',
+        sub.growth_limits?.join(', ') || '',
+        sub.learning_style?.join(', ') || '',
+        sub.teaching_topic || '',
+        sub.mentor_interest || '',
+        sub.six_month_goal || '',
+        sub.goal_importance || '',
+        JSON.stringify(sub.skill_ratings || {}),
       ]),
     ]
 
@@ -91,38 +85,21 @@ export default function AdminDashboard() {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'All Submissions')
 
-    ws['!cols'] = Array(data[0].length).fill({ wch: 20 })
+    ws['!cols'] = Array(data[0].length).fill({ wch: 25 })
 
-    const fileName = `All_Assessments_${new Date().toISOString().split('T')[0]}.xlsx`
+    const fileName = `Career_Assessments_${new Date().toISOString().split('T')[0]}.xlsx`
     XLSX.writeFile(wb, fileName)
   }
 
-  const calculateAverageSkill = (submissions: AssessmentSubmission[], category: string, skill: string) => {
-    if (submissions.length === 0) return 0
-    const sum = submissions.reduce((acc, sub: any) => {
-      return acc + (sub[category]?.[skill] || 0)
-    }, 0)
-    return (sum / submissions.length).toFixed(1)
-  }
-
-  const getSkillRatingsFromComments = (submission: AssessmentSubmission) => {
-    try {
-      const comments = JSON.parse(submission.additional_comments || '{}')
-      return comments.skillRatings || {}
-    } catch {
-      return {}
-    }
-  }
-
   const calculateAverageSkillRating = () => {
-    if (submissions.length === 0) return 0
+    if (submissions.length === 0) return '0.0'
     let totalRating = 0
     let ratingCount = 0
     
     submissions.forEach(sub => {
-      const skillRatings = getSkillRatingsFromComments(sub)
+      const skillRatings = sub.skill_ratings || {}
       Object.values(skillRatings).forEach((skill: any) => {
-        if (skill.rating) {
+        if (skill?.rating) {
           totalRating += skill.rating
           ratingCount++
         }
@@ -132,20 +109,31 @@ export default function AdminDashboard() {
     return ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : '0.0'
   }
 
-  const getMostCommonStrengths = () => {
+  const getMostCommonStrength = () => {
     const strengthCounts: Record<string, number> = {}
     
     submissions.forEach(sub => {
-      try {
-        const comments = JSON.parse(sub.additional_comments || '{}')
-        const strengths = comments.strengths || []
-        strengths.forEach((strength: string) => {
-          strengthCounts[strength] = (strengthCounts[strength] || 0) + 1
-        })
-      } catch {}
+      const strengths = sub.strengths || []
+      strengths.forEach((strength: string) => {
+        strengthCounts[strength] = (strengthCounts[strength] || 0) + 1
+      })
     })
     
     const sorted = Object.entries(strengthCounts).sort((a, b) => b[1] - a[1])
+    return sorted.length > 0 ? sorted[0][0] : 'N/A'
+  }
+
+  const getMostCommonGrowthArea = () => {
+    const areaCounts: Record<string, number> = {}
+    
+    submissions.forEach(sub => {
+      const areas = sub.growth_areas || []
+      areas.forEach((area: string) => {
+        areaCounts[area] = (areaCounts[area] || 0) + 1
+      })
+    })
+    
+    const sorted = Object.entries(areaCounts).sort((a, b) => b[1] - a[1])
     return sorted.length > 0 ? sorted[0][0] : 'N/A'
   }
 
@@ -186,21 +174,39 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
-            <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Submissions</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <User className="w-4 h-4 text-growth-600" />
+              <h3 className="text-sm font-semibold text-slate-600">Total Submissions</h3>
+            </div>
             <p className="text-3xl font-bold text-slate-800">{submissions.length}</p>
           </Card>
           <Card>
-            <h3 className="text-sm font-semibold text-slate-600 mb-2">Avg Skill Rating</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-growth-600" />
+              <h3 className="text-sm font-semibold text-slate-600">Avg Skill Rating</h3>
+            </div>
             <p className="text-3xl font-bold text-slate-800">
               {calculateAverageSkillRating()} / 5
             </p>
           </Card>
           <Card>
-            <h3 className="text-sm font-semibold text-slate-600 mb-2">Top Strength</h3>
-            <p className="text-2xl font-bold text-slate-800">
-              {getMostCommonStrengths()}
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-growth-600" />
+              <h3 className="text-sm font-semibold text-slate-600">Top Strength</h3>
+            </div>
+            <p className="text-lg font-bold text-slate-800">
+              {getMostCommonStrength()}
+            </p>
+          </Card>
+          <Card>
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-growth-600" />
+              <h3 className="text-sm font-semibold text-slate-600">Top Growth Area</h3>
+            </div>
+            <p className="text-lg font-bold text-slate-800">
+              {getMostCommonGrowthArea()}
             </p>
           </Card>
         </div>
@@ -235,31 +241,59 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-slate-700">{submission.current_role}</p>
-                      <p className="text-xs text-slate-500">{submission.years_of_experience}</p>
+                      <p className="text-xs text-slate-500">AGID: {submission.agid || 'N/A'}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-600 font-medium mb-1">Growth Areas</p>
-                      <p className="text-slate-800 text-xs">
-                        {submission.areas_for_growth || 'Not specified'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600 font-medium mb-1">Learning Style</p>
-                      <p className="text-slate-800 text-xs">
-                        {submission.learning_preferences.join(', ') || 'Not specified'}
-                      </p>
-                    </div>
-                  </div>
+                  
+                  {/* Career Vision */}
                   <div className="mt-3 pt-3 border-t border-slate-200">
-                    <p className="text-slate-600 font-medium mb-1 text-sm">Career Goals</p>
-                    <p className="text-slate-700 text-xs">
-                      <strong>Short-term:</strong> {submission.short_term_goals || 'Not specified'}
-                    </p>
-                    <p className="text-slate-700 text-xs mt-1">
-                      <strong>Long-term:</strong> {submission.long_term_goals || 'Not specified'}
-                    </p>
+                    <p className="text-slate-600 font-semibold mb-2 text-sm">📍 Career Vision</p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-slate-500">Growth Areas:</p>
+                        <p className="text-slate-800">{submission.growth_areas?.join(', ') || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Future Vision:</p>
+                        <p className="text-slate-800">{submission.future_vision || 'Not specified'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Superpowers */}
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <p className="text-slate-600 font-semibold mb-2 text-sm">⭐ Superpowers</p>
+                    <div className="text-xs">
+                      <p className="text-slate-500">Strengths:</p>
+                      <p className="text-slate-800 mb-2">{submission.strengths?.join(', ') || 'Not specified'}</p>
+                      <p className="text-slate-500">Proud Accomplishment:</p>
+                      <p className="text-slate-800">{submission.proud_accomplishment || 'Not specified'}</p>
+                    </div>
+                  </div>
+
+                  {/* Growth Opportunities */}
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <p className="text-slate-600 font-semibold mb-2 text-sm">🎯 Growth Opportunities</p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-slate-500">Skills to Improve:</p>
+                        <p className="text-slate-800">{submission.skills_to_improve?.join(', ') || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Learning Style:</p>
+                        <p className="text-slate-800">{submission.learning_style?.join(', ') || 'Not specified'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Community & Goals */}
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <p className="text-slate-600 font-semibold mb-2 text-sm">🚀 Goals & Community</p>
+                    <div className="text-xs space-y-1">
+                      <p><span className="text-slate-500">6-Month Goal:</span> {submission.six_month_goal || 'Not specified'}</p>
+                      <p><span className="text-slate-500">Teaching Topic:</span> {submission.teaching_topic || 'Not specified'}</p>
+                      <p><span className="text-slate-500">Mentor Interest:</span> {submission.mentor_interest || 'Not specified'}</p>
+                    </div>
                   </div>
                 </div>
               ))}

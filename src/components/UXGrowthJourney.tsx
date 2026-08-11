@@ -711,43 +711,41 @@ export default function UXGrowthJourney() {
 
   const handleSubmit = async () => {
     if (isFormComplete()) {
-      // Save to Supabase
+      // Save to Supabase with complete data
       try {
         const submissionData = {
+          // Personal Information
           name: formData.name,
           email: formData.email,
+          agid: formData.agid,
           current_role: formData.currentRole,
-          years_of_experience: 'N/A', // UXGrowthJourney doesn't have this field
-          ux_research_skills: {
-            userInterviews: 0,
-            usabilityTesting: 0,
-            dataAnalysis: 0,
-            researchPlanning: 0
-          },
-          design_systems_skills: {
-            componentLibraries: 0,
-            designTokens: 0,
-            documentation: 0,
-            accessibility: 0
-          },
-          leadership_skills: {
-            teamMentoring: 0,
-            projectManagement: 0,
-            stakeholderCommunication: 0,
-            strategicThinking: 0
-          },
-          short_term_goals: formData.sixMonthGoal || '',
-          long_term_goals: formData.careerGrowth || '',
-          areas_for_growth: formData.growthAreas.join(', '),
-          learning_preferences: formData.learningStyle,
-          additional_comments: JSON.stringify({
-            skillRatings: formData.skillRatings,
-            strengths: formData.strengths,
-            skillsToImprove: formData.skillsToImprove,
-            futureVision: formData.futureVision,
-            teachingTopic: formData.teachingTopic,
-            mentorInterest: formData.mentorInterest
-          })
+          
+          // Step 1: Career Vision
+          career_growth: formData.careerGrowth,
+          future_vision: formData.futureVision,
+          growth_areas: formData.growthAreas,
+          
+          // Step 2: Self Assessment
+          skill_ratings: formData.skillRatings,
+          multi_select_responses: formData.multiSelectResponses,
+          
+          // Step 3: Superpowers
+          strengths: formData.strengths,
+          teammates_feedback: formData.teammatesFeedback,
+          proud_accomplishment: formData.proudAccomplishment,
+          
+          // Step 4: Growth Opportunities
+          skills_to_improve: formData.skillsToImprove,
+          growth_limits: formData.growthLimits,
+          learning_style: formData.learningStyle,
+          
+          // Step 5: Community
+          teaching_topic: formData.teachingTopic,
+          mentor_interest: formData.mentorInterest,
+          
+          // Step 6: Commitment
+          six_month_goal: formData.sixMonthGoal,
+          goal_importance: formData.goalImportance
         }
 
         const { error } = await supabase
@@ -756,11 +754,13 @@ export default function UXGrowthJourney() {
 
         if (error) {
           console.error('Error saving to Supabase:', error)
+          alert('Failed to save your assessment. Please try again.')
         } else {
           console.log('Successfully saved to Supabase!')
         }
       } catch (err) {
         console.error('Exception saving to Supabase:', err)
+        alert('An error occurred while saving. Please try again.')
       }
 
       setShowResults(true)
