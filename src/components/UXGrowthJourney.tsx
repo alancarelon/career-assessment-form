@@ -5,6 +5,7 @@ import Card from './Card'
 import Badge from './Badge'
 import { roleBasedQuestions } from '../data/roleQuestions'
 import { calculateXP, getSkillName, getCareerLevel, getNextCareerLevel, CAREER_LEVELS } from '../utils/scoreCalculations'
+import { supabase } from '../lib/supabase'
 
 interface FormData {
   // Step 1: Career Aspirations
@@ -708,8 +709,60 @@ export default function UXGrowthJourney() {
     return incomplete
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isFormComplete()) {
+      // Save to Supabase
+      try {
+        const submissionData = {
+          name: formData.name,
+          email: formData.email,
+          current_role: formData.currentRole,
+          years_of_experience: 'N/A', // UXGrowthJourney doesn't have this field
+          ux_research_skills: {
+            userInterviews: 0,
+            usabilityTesting: 0,
+            dataAnalysis: 0,
+            researchPlanning: 0
+          },
+          design_systems_skills: {
+            componentLibraries: 0,
+            designTokens: 0,
+            documentation: 0,
+            accessibility: 0
+          },
+          leadership_skills: {
+            teamMentoring: 0,
+            projectManagement: 0,
+            stakeholderCommunication: 0,
+            strategicThinking: 0
+          },
+          short_term_goals: formData.sixMonthGoal || '',
+          long_term_goals: formData.careerGrowth || '',
+          areas_for_growth: formData.areasForGrowth.join(', '),
+          learning_preferences: formData.learningStyle,
+          additional_comments: JSON.stringify({
+            skillRatings: formData.skillRatings,
+            strengths: formData.strengths,
+            skillsToImprove: formData.skillsToImprove,
+            futureVision: formData.futureVision,
+            teachingTopic: formData.teachingTopic,
+            mentorInterest: formData.mentorInterest
+          })
+        }
+
+        const { error } = await supabase
+          .from('assessments')
+          .insert([submissionData])
+
+        if (error) {
+          console.error('Error saving to Supabase:', error)
+        } else {
+          console.log('Successfully saved to Supabase!')
+        }
+      } catch (err) {
+        console.error('Exception saving to Supabase:', err)
+      }
+
       setShowResults(true)
     } else {
       // User will see the incomplete notification on step 6
