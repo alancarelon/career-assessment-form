@@ -105,6 +105,50 @@ export default function AdminDashboard() {
     return (sum / submissions.length).toFixed(1)
   }
 
+  const getSkillRatingsFromComments = (submission: AssessmentSubmission) => {
+    try {
+      const comments = JSON.parse(submission.additional_comments || '{}')
+      return comments.skillRatings || {}
+    } catch {
+      return {}
+    }
+  }
+
+  const calculateAverageSkillRating = () => {
+    if (submissions.length === 0) return 0
+    let totalRating = 0
+    let ratingCount = 0
+    
+    submissions.forEach(sub => {
+      const skillRatings = getSkillRatingsFromComments(sub)
+      Object.values(skillRatings).forEach((skill: any) => {
+        if (skill.rating) {
+          totalRating += skill.rating
+          ratingCount++
+        }
+      })
+    })
+    
+    return ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : '0.0'
+  }
+
+  const getMostCommonStrengths = () => {
+    const strengthCounts: Record<string, number> = {}
+    
+    submissions.forEach(sub => {
+      try {
+        const comments = JSON.parse(sub.additional_comments || '{}')
+        const strengths = comments.strengths || []
+        strengths.forEach((strength: string) => {
+          strengthCounts[strength] = (strengthCounts[strength] || 0) + 1
+        })
+      } catch {}
+    })
+    
+    const sorted = Object.entries(strengthCounts).sort((a, b) => b[1] - a[1])
+    return sorted.length > 0 ? sorted[0][0] : 'N/A'
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -148,15 +192,15 @@ export default function AdminDashboard() {
             <p className="text-3xl font-bold text-slate-800">{submissions.length}</p>
           </Card>
           <Card>
-            <h3 className="text-sm font-semibold text-slate-600 mb-2">Avg UX Research</h3>
+            <h3 className="text-sm font-semibold text-slate-600 mb-2">Avg Skill Rating</h3>
             <p className="text-3xl font-bold text-slate-800">
-              {calculateAverageSkill(submissions, 'ux_research_skills', 'userInterviews')}
+              {calculateAverageSkillRating()} / 5
             </p>
           </Card>
           <Card>
-            <h3 className="text-sm font-semibold text-slate-600 mb-2">Avg Leadership</h3>
-            <p className="text-3xl font-bold text-slate-800">
-              {calculateAverageSkill(submissions, 'leadership_skills', 'teamMentoring')}
+            <h3 className="text-sm font-semibold text-slate-600 mb-2">Top Strength</h3>
+            <p className="text-2xl font-bold text-slate-800">
+              {getMostCommonStrengths()}
             </p>
           </Card>
         </div>
@@ -194,40 +238,28 @@ export default function AdminDashboard() {
                       <p className="text-xs text-slate-500">{submission.years_of_experience}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-slate-600 font-medium mb-1">UX Research</p>
-                      <p className="text-slate-800">
-                        Avg: {(
-                          (submission.ux_research_skills.userInterviews +
-                            submission.ux_research_skills.usabilityTesting +
-                            submission.ux_research_skills.dataAnalysis +
-                            submission.ux_research_skills.researchPlanning) / 4
-                        ).toFixed(1)}
+                      <p className="text-slate-600 font-medium mb-1">Growth Areas</p>
+                      <p className="text-slate-800 text-xs">
+                        {submission.areas_for_growth || 'Not specified'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-600 font-medium mb-1">Design Systems</p>
-                      <p className="text-slate-800">
-                        Avg: {(
-                          (submission.design_systems_skills.componentLibraries +
-                            submission.design_systems_skills.designTokens +
-                            submission.design_systems_skills.documentation +
-                            submission.design_systems_skills.accessibility) / 4
-                        ).toFixed(1)}
+                      <p className="text-slate-600 font-medium mb-1">Learning Style</p>
+                      <p className="text-slate-800 text-xs">
+                        {submission.learning_preferences.join(', ') || 'Not specified'}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-slate-600 font-medium mb-1">Leadership</p>
-                      <p className="text-slate-800">
-                        Avg: {(
-                          (submission.leadership_skills.teamMentoring +
-                            submission.leadership_skills.projectManagement +
-                            submission.leadership_skills.stakeholderCommunication +
-                            submission.leadership_skills.strategicThinking) / 4
-                        ).toFixed(1)}
-                      </p>
-                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <p className="text-slate-600 font-medium mb-1 text-sm">Career Goals</p>
+                    <p className="text-slate-700 text-xs">
+                      <strong>Short-term:</strong> {submission.short_term_goals || 'Not specified'}
+                    </p>
+                    <p className="text-slate-700 text-xs mt-1">
+                      <strong>Long-term:</strong> {submission.long_term_goals || 'Not specified'}
+                    </p>
                   </div>
                 </div>
               ))}
