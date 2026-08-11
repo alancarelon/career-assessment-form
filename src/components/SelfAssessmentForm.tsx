@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Download, CheckCircle2, Rocket } from 'lucide-react'
+import { Download, CheckCircle2, Rocket, AlertCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import Button from './Button'
 import Card from './Card'
+import { supabase } from '../lib/supabase'
 
 interface FormData {
   // Personal Information
@@ -83,6 +84,8 @@ const learningOptions = [
 export default function SelfAssessmentForm() {
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -159,14 +162,45 @@ export default function SelfAssessmentForm() {
     XLSX.writeFile(wb, fileName)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    exportToExcel()
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setFormData(initialFormData)
-    }, 3000)
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const { error: supabaseError } = await supabase
+        .from('assessments')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            current_role: formData.currentRole,
+            years_of_experience: formData.yearsOfExperience,
+            ux_research_skills: formData.uxResearchSkills,
+            design_systems_skills: formData.designSystemsSkills,
+            leadership_skills: formData.leadershipSkills,
+            short_term_goals: formData.shortTermGoals,
+            long_term_goals: formData.longTermGoals,
+            areas_for_growth: formData.areasForGrowth,
+            learning_preferences: formData.learningPreferences,
+            additional_comments: formData.additionalComments,
+          },
+        ])
+
+      if (supabaseError) throw supabaseError
+
+      exportToExcel()
+      setSubmitted(true)
+      setTimeout(() => {
+        setSubmitted(false)
+        setFormData(initialFormData)
+      }, 3000)
+    } catch (err) {
+      console.error('Error submitting form:', err)
+      setError('Failed to submit form. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const RatingScale = ({ value, onChange }: { value: number; onChange: (rating: number) => void }) => (
@@ -427,11 +461,21 @@ export default function SelfAssessmentForm() {
             />
           </Card>
 
+          {/* Error Message */}
+          {error && (
+            <Card className="bg-red-50 border-red-200">
+              <div className="flex items-center gap-3 text-red-800">
+                <AlertCircle className="w-5 h-5" />
+                <p>{error}</p>
+              </div>
+            </Card>
+          )}
+
           {/* Submit Button */}
           <div className="flex justify-center">
-            <Button type="submit" size="lg" className="min-w-[300px]">
+            <Button type="submit" size="lg" className="min-w-[300px]" disabled={isSubmitting}>
               <Download className="w-5 h-5 mr-2" />
-              Submit & Download Excel
+              {isSubmitting ? 'Submitting...' : 'Submit & Download Excel'}
             </Button>
           </div>
         </form>
