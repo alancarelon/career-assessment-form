@@ -1097,6 +1097,12 @@ export default function UXGrowthJourney() {
             <p className="text-xl text-slate-600">
               Data-driven analysis of your UX journey, {formData.name}
             </p>
+            <button
+              onClick={() => setShowStory(true)}
+              className="mt-4 text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-2 mx-auto hover:underline transition-all"
+            >
+              <span>📖</span> Read Your Journey Story
+            </button>
           </div>
 
           {/* Key Metrics Cards */}
@@ -1399,136 +1405,102 @@ export default function UXGrowthJourney() {
             </div>
           </Card>
 
-          {/* Your UX Journey Story - Narrative Summary */}
-          <Card className="mb-8 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-            <button 
-              onClick={() => setShowStory(!showStory)}
-              className="w-full flex items-center justify-between p-6 text-left hover:bg-white/50 rounded-lg transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">📖</span>
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-800">Your UX Journey Story</h3>
-                  <p className="text-sm text-slate-600">A personalized narrative of your growth path</p>
-                </div>
-              </div>
-              <span className="text-2xl text-purple-600">{showStory ? '▼' : '▶'}</span>
-            </button>
-            
-            {showStory && (
-              <div className="px-6 pb-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
-                <div className="h-px bg-gradient-to-r from-transparent via-purple-300 to-transparent mb-6"></div>
-                
-                {/* Introduction */}
-                <div className="bg-white p-6 rounded-lg border-l-4 border-purple-500">
-                  <h4 className="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2">
-                    <span>🌟</span> Your Journey Begins
-                  </h4>
-                  <p className="text-slate-700 leading-relaxed">
-                    {formData.name}, as a <strong>{formData.currentRole}</strong>, you've embarked on an exciting UX journey. 
-                    Your assessment reveals a current overall rating of <strong>{avgRating}/5.0</strong>, placing you at the 
-                    <strong> {currentLevel.level}</strong> level. This is a testament to your dedication and the skills you've 
-                    cultivated so far.
-                  </p>
-                </div>
-
-                {/* Strengths Narrative */}
-                <div className="bg-white p-6 rounded-lg border-l-4 border-green-500">
-                  <h4 className="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
-                    <span>💪</span> Your Superpowers
-                  </h4>
-                  <p className="text-slate-700 leading-relaxed mb-3">
-                    What truly sets you apart is your mastery in <strong>{formData.strengths[0]}</strong>. 
-                    {formData.strengths.length > 1 && (
-                      <span> Combined with your strengths in <strong>{formData.strengths.slice(1).join(', ')}</strong>, 
-                      you have a powerful toolkit that makes you invaluable to any team.</span>
-                    )}
-                  </p>
-                  <p className="text-sm text-green-700 italic">
-                    💡 Your teammates recognize you for: {formData.teammatesFeedback || 'your collaborative spirit and expertise'}
-                  </p>
-                </div>
-
-                {/* Growth Opportunities */}
-                <div className="bg-white p-6 rounded-lg border-l-4 border-orange-500">
-                  <h4 className="text-lg font-bold text-orange-800 mb-3 flex items-center gap-2">
-                    <span>🎯</span> Your Growth Frontier
-                  </h4>
-                  <p className="text-slate-700 leading-relaxed">
-                    Every expert was once a beginner. You've identified <strong>{formData.skillsToImprove[0]}</strong> as 
-                    your primary area for development. {formData.learningStyle.length > 0 && (
-                      <span>Your preferred learning approach through <strong>{formData.learningStyle[0]}</strong> will 
-                      be your guide in this journey.</span>
-                    )} This self-awareness is the first step toward mastery.
-                  </p>
-                </div>
-
-                {/* Vision & Goals */}
-                <div className="bg-white p-6 rounded-lg border-l-4 border-blue-500">
-                  <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
-                    <span>🚀</span> Your Vision Forward
-                  </h4>
-                  <p className="text-slate-700 leading-relaxed mb-3">
-                    Looking ahead, your aspiration to <strong>{formData.careerGrowth}</strong> shows clear direction. 
-                    In the next 6 months, you're focused on: <strong>{formData.sixMonthGoal || 'achieving your next milestone'}</strong>.
-                  </p>
-                  {formData.proudAccomplishment && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm font-semibold text-blue-800 mb-1">Recent Win:</p>
-                      <p className="text-sm text-slate-700 italic">"{formData.proudAccomplishment}"</p>
+          {/* Story Modal */}
+          {showStory && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setShowStory(false)}>
+              <div className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-3xl font-bold">{formData.name}'s Journey</h2>
+                      <p className="text-purple-100 mt-1">Your personalized UX story</p>
                     </div>
-                  )}
+                    <button onClick={() => setShowStory(false)} className="text-white hover:bg-white/20 rounded-full p-2 transition-all">
+                      <span className="text-2xl">×</span>
+                    </button>
+                  </div>
                 </div>
-
-                {/* Community & Impact */}
-                {(formData.teachingTopic || formData.mentorInterest) && (
-                  <div className="bg-white p-6 rounded-lg border-l-4 border-indigo-500">
-                    <h4 className="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">
-                      <span>🤝</span> Your Community Impact
-                    </h4>
-                    <p className="text-slate-700 leading-relaxed">
-                      Beyond personal growth, you're committed to lifting others. 
-                      {formData.teachingTopic && (
-                        <span> Your expertise in <strong>{formData.teachingTopic}</strong> could inspire countless designers.</span>
-                      )}
-                      {formData.mentorInterest && (
-                        <span> Your interest in <strong>{formData.mentorInterest}</strong> shows your dedication to community building.</span>
-                      )}
+                
+                <div className="p-8 space-y-8">
+                  <div className="prose prose-lg max-w-none">
+                    <p className="text-xl text-slate-700 leading-relaxed">
+                      As a <span className="font-semibold text-purple-600">{formData.currentRole}</span>, {formData.name} brings 
+                      a unique blend of skills and passion to every project. Currently at the <span className="font-semibold">{currentLevel.level}</span> level 
+                      with an overall rating of <span className="font-semibold text-blue-600">{avgRating}/5.0</span>, the journey ahead is filled with opportunity.
                     </p>
                   </div>
-                )}
 
-                {/* The Road Ahead */}
-                <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-lg">
-                  <h4 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
-                    <span>✨</span> The Road Ahead
-                  </h4>
-                  <p className="text-slate-800 leading-relaxed mb-4">
-                    Your journey is uniquely yours, {formData.name}. With your current rating of <strong>{avgRating}/5.0</strong>, 
-                    you're {parseFloat(avgRating) >= 4 ? 'already excelling' : 'building a strong foundation'}. 
-                    The gap between where you are and where you want to be isn't a barrier—it's your roadmap.
-                  </p>
-                  <div className="grid grid-cols-3 gap-4 mt-4">
-                    <div className="bg-white p-4 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-purple-600">{benchmarks.filter(b => b.status === 'exceeds' || b.status === 'meets').length}</p>
-                      <p className="text-xs text-slate-600 mt-1">Categories On Track</p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-green-50 p-6 rounded-xl">
+                      <h3 className="text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
+                        <span>✨</span> Strengths
+                      </h3>
+                      <ul className="space-y-2">
+                        {formData.strengths.map((s, i) => (
+                          <li key={i} className="text-slate-700 flex items-start gap-2">
+                            <span className="text-green-600 mt-1">•</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {formData.teammatesFeedback && (
+                        <p className="mt-4 text-sm text-green-800 italic border-l-2 border-green-500 pl-3">
+                          "{formData.teammatesFeedback}"
+                        </p>
+                      )}
                     </div>
-                    <div className="bg-white p-4 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-blue-600">{formData.strengths.length}</p>
-                      <p className="text-xs text-slate-600 mt-1">Core Strengths</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-green-600">{formData.skillsToImprove.length}</p>
-                      <p className="text-xs text-slate-600 mt-1">Growth Opportunities</p>
+
+                    <div className="bg-orange-50 p-6 rounded-xl">
+                      <h3 className="text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">
+                        <span>🎯</span> Growth Focus
+                      </h3>
+                      <ul className="space-y-2">
+                        {formData.skillsToImprove.map((s, i) => (
+                          <li key={i} className="text-slate-700 flex items-start gap-2">
+                            <span className="text-orange-600 mt-1">•</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {formData.learningStyle.length > 0 && (
+                        <p className="mt-4 text-sm text-orange-800">
+                          <span className="font-semibold">Learning style:</span> {formData.learningStyle[0]}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <p className="text-sm text-slate-700 mt-4 italic text-center">
-                    "Every master was once a disaster. Keep growing, keep learning, keep designing." 🌱
-                  </p>
+
+                  {formData.proudAccomplishment && (
+                    <div className="bg-blue-50 p-6 rounded-xl">
+                      <h3 className="text-xl font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <span>🏆</span> Recent Achievement
+                      </h3>
+                      <p className="text-slate-700 italic">"{formData.proudAccomplishment}"</p>
+                    </div>
+                  )}
+
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
+                    <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                      <span>🚀</span> Looking Ahead
+                    </h3>
+                    <div className="space-y-3 text-slate-700">
+                      <p><span className="font-semibold text-purple-800">6-month goal:</span> {formData.sixMonthGoal || 'Building momentum'}</p>
+                      <p><span className="font-semibold text-pink-800">Career vision:</span> {formData.careerGrowth}</p>
+                      {formData.teachingTopic && (
+                        <p><span className="font-semibold text-indigo-800">Ready to teach:</span> {formData.teachingTopic}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-center py-6 border-t-2 border-slate-200">
+                    <p className="text-lg text-slate-600 italic">
+                      "The journey of a thousand miles begins with a single step. Keep growing!" 🌱
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
-          </Card>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-4 mt-8">
