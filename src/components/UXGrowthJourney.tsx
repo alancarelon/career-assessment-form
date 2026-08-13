@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ArrowRight, ArrowLeft, Sparkles, Target, Users, TrendingUp, Award, Zap, Download } from 'lucide-react'
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { ArrowRight, ArrowLeft, Sparkles, Target, Users, TrendingUp, Award, Zap, Download, BarChart2 } from 'lucide-react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts'
 import Button from './Button'
 import Card from './Card'
 import Badge from './Badge'
@@ -839,32 +839,111 @@ export default function UXGrowthJourney() {
       ? (skillRatings.reduce((sum, skill) => sum + skill.rating, 0) / skillRatings.length).toFixed(1)
       : '0.0'
 
-    // Prepare radar chart data by grouping skills
-    const getRadarDataByCategory = () => {
+    // Get top 5 skills for cleaner radar chart
+    const getTopSkillsForRadar = () => {
       const skills = Object.entries(formData.skillRatings)
-      const categories: Record<string, Array<{skill: string, rating: number, fullMark: number}>> = {
-        'Core Skills': [],
-        'Technical Skills': [],
-        'Soft Skills': []
-      }
-      
-      skills.forEach(([skillName, data]) => {
-        const skillData = { skill: skillName, rating: data.rating, fullMark: 5 }
-        
-        // Categorize skills (you can customize this logic)
-        if (skillName.toLowerCase().includes('research') || skillName.toLowerCase().includes('testing')) {
-          categories['Core Skills'].push(skillData)
-        } else if (skillName.toLowerCase().includes('design') || skillName.toLowerCase().includes('prototype')) {
-          categories['Technical Skills'].push(skillData)
-        } else {
-          categories['Soft Skills'].push(skillData)
-        }
-      })
-      
-      return categories
+        .sort(([, a], [, b]) => b.rating - a.rating)
+        .slice(0, 6) // Top 6 skills only
+        .map(([skill, data]) => ({
+          skill: skill.length > 20 ? skill.substring(0, 20) + '...' : skill,
+          rating: data.rating,
+          fullMark: 5
+        }))
+      return skills
     }
 
-    const radarCategories = getRadarDataByCategory()
+    const topSkills = getTopSkillsForRadar()
+
+    // Calculate peer comparison percentiles
+    const getPeerComparison = (): Array<{skill: string, rating: number, percentile: number}> => {
+      const allSkills = Object.entries(formData.skillRatings)
+      const comparisons: Array<{skill: string, rating: number, percentile: number}> = []
+      
+      // Get top 3 skills for comparison
+      const topRated = allSkills
+        .sort(([, a], [, b]) => b.rating - a.rating)
+        .slice(0, 3)
+      
+      topRated.forEach(([skill, data]) => {
+        // Simulate percentile based on rating (in real app, compare to database)
+        const percentile = data.rating >= 4.5 ? 90 : 
+                          data.rating >= 4 ? 75 :
+                          data.rating >= 3.5 ? 60 :
+                          data.rating >= 3 ? 45 : 30
+        
+        comparisons.push({
+          skill,
+          rating: data.rating,
+          percentile
+        })
+      })
+      
+      return comparisons
+    }
+
+    const peerComparisons = getPeerComparison()
+
+    // Create 2x2 Strengths vs Growth Matrix
+    const getStrengthsGrowthMatrix = () => {
+      const allSkills = Object.entries(formData.skillRatings)
+      
+      const matrix = {
+        highStrength: allSkills.filter(([, data]) => data.rating >= 4).map(([name]) => name),
+        developingStrength: allSkills.filter(([, data]) => data.rating >= 3 && data.rating < 4).map(([name]) => name),
+        focusArea: allSkills.filter(([, data]) => data.rating < 3).map(([name]) => name)
+      }
+      
+      return matrix
+    }
+
+    const matrix = getStrengthsGrowthMatrix()
+
+    // Generate personalized roadmap milestones
+    const getPersonalizedRoadmap = () => {
+      const roadmap = []
+      
+      // Current state
+      roadmap.push({
+        phase: 'Current',
+        title: formData.currentRole,
+        description: `Avg Rating: ${avgRating}/5`,
+        icon: '📍',
+        color: 'blue'
+      })
+      
+      // 3-month milestone (based on skills to improve)
+      if (formData.skillsToImprove.length > 0) {
+        roadmap.push({
+          phase: '3 Months',
+          title: `Develop ${formData.skillsToImprove[0]}`,
+          description: formData.learningStyle[0] || 'Start learning',
+          icon: '📚',
+          color: 'purple'
+        })
+      }
+      
+      // 6-month goal (from their input)
+      roadmap.push({
+        phase: '6 Months',
+        title: formData.sixMonthGoal || 'Achieve next milestone',
+        description: `Target: ${(parseFloat(avgRating) + 0.5).toFixed(1)}/5 rating`,
+        icon: '🎯',
+        color: 'indigo'
+      })
+      
+      // 1-year vision (based on career growth)
+      roadmap.push({
+        phase: '1 Year',
+        title: formData.careerGrowth,
+        description: `Leverage ${formData.strengths[0] || 'your strengths'}`,
+        icon: '🌟',
+        color: 'green'
+      })
+      
+      return roadmap
+    }
+
+    const roadmap = getPersonalizedRoadmap()
 
     // Generate personalized insights
     const getPersonalizedInsights = () => {
@@ -943,34 +1022,140 @@ export default function UXGrowthJourney() {
             </Card>
           </div>
 
-          {/* Skill Radar Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {Object.entries(radarCategories).map(([category, data]) => (
-              data.length > 0 && (
-                <Card key={category}>
-                  <h3 className="text-lg font-bold text-slate-800 mb-4 text-center">{category}</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <RadarChart data={data}>
-                      <PolarGrid stroke="#e2e8f0" />
-                      <PolarAngleAxis 
-                        dataKey="skill" 
-                        tick={{ fill: '#64748b', fontSize: 10 }}
-                      />
-                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: '#64748b' }} />
-                      <Radar
-                        name={category}
-                        dataKey="rating"
-                        stroke={category === 'Core Skills' ? '#3b82f6' : category === 'Technical Skills' ? '#10b981' : '#8b5cf6'}
-                        fill={category === 'Core Skills' ? '#3b82f6' : category === 'Technical Skills' ? '#10b981' : '#8b5cf6'}
-                        fillOpacity={0.6}
-                      />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </Card>
-              )
-            ))}
-          </div>
+          {/* Top Skills Radar Chart - Single Clean Chart */}
+          <Card className="mb-8">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center flex items-center justify-center gap-2">
+              <BarChart2 className="w-6 h-6 text-blue-600" />
+              Your Top Skills Profile
+            </h3>
+            <ResponsiveContainer width="100%" height={400}>
+              <RadarChart data={topSkills}>
+                <PolarGrid stroke="#e2e8f0" strokeWidth={2} />
+                <PolarAngleAxis 
+                  dataKey="skill" 
+                  tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 5]} 
+                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  tickCount={6}
+                />
+                <Radar
+                  name="Skill Rating"
+                  dataKey="rating"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
+                  fillOpacity={0.5}
+                  strokeWidth={3}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '2px solid #3b82f6',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+            <p className="text-center text-sm text-slate-600 mt-4">
+              Showing your top 6 rated skills • Rated on a scale of 1-5
+            </p>
+          </Card>
+
+          {/* Peer Comparison */}
+          <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-600" />
+              How You Compare to Peers
+            </h3>
+            <div className="space-y-4">
+              {peerComparisons.map((comp, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-bold text-slate-800">{comp.skill}</p>
+                    <span className="text-sm font-semibold text-blue-600">Top {100 - comp.percentile}%</span>
+                  </div>
+                  <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all"
+                      style={{ width: `${comp.percentile}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Rating: {comp.rating}/5 • You're in the {comp.percentile}th percentile
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* 2x2 Strengths vs Growth Matrix */}
+          <Card className="mb-8">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Target className="w-6 h-6 text-purple-600" />
+              Strengths vs Growth Matrix
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {/* High Strength (Top Right) */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-lg border-2 border-green-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🌟</span>
+                  <h4 className="font-bold text-green-800">Your Strengths</h4>
+                </div>
+                <p className="text-xs text-green-700 mb-3">Rating ≥ 4.0 • Leverage these!</p>
+                <div className="space-y-2">
+                  {matrix.highStrength.slice(0, 4).map((skill, i) => (
+                    <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-green-200">
+                      {skill}
+                    </div>
+                  ))}
+                  {matrix.highStrength.length === 0 && (
+                    <p className="text-sm text-green-600 italic">Keep developing skills!</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Developing (Top Left) */}
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-lg border-2 border-yellow-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">📈</span>
+                  <h4 className="font-bold text-yellow-800">Developing</h4>
+                </div>
+                <p className="text-xs text-yellow-700 mb-3">Rating 3.0-3.9 • Almost there!</p>
+                <div className="space-y-2">
+                  {matrix.developingStrength.slice(0, 4).map((skill, i) => (
+                    <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-yellow-200">
+                      {skill}
+                    </div>
+                  ))}
+                  {matrix.developingStrength.length === 0 && (
+                    <p className="text-sm text-yellow-600 italic">Great progress!</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Focus Area (Bottom) - Full Width */}
+              <div className="col-span-2 bg-gradient-to-br from-orange-50 to-red-100 p-6 rounded-lg border-2 border-orange-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🎯</span>
+                  <h4 className="font-bold text-orange-800">Priority Focus Areas</h4>
+                </div>
+                <p className="text-xs text-orange-700 mb-3">Rating &lt; 3.0 • Invest time here for maximum growth</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {matrix.focusArea.slice(0, 4).map((skill, i) => (
+                    <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-orange-200">
+                      {skill}
+                    </div>
+                  ))}
+                  {matrix.focusArea.length === 0 && (
+                    <p className="text-sm text-orange-600 italic col-span-2">Excellent! No critical gaps identified.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
 
           {/* Strengths vs Growth */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -1005,38 +1190,37 @@ export default function UXGrowthJourney() {
             </Card>
           </div>
 
-          {/* Career Roadmap */}
-          <Card className="mb-8 bg-gradient-to-r from-blue-50 to-purple-50">
+          {/* Personalized Career Roadmap */}
+          <Card className="mb-8 bg-gradient-to-r from-blue-50 via-purple-50 to-green-50">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <span>🗺️</span>
-              Your Career Roadmap
+              Your Personalized Career Roadmap
             </h3>
             <div className="relative">
               <div className="flex items-center justify-between">
-                <div className="flex-1 text-center">
-                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl">📍</span>
+                {roadmap.map((milestone, index) => (
+                  <div key={index} className="flex items-center flex-1">
+                    <div className="flex-1 text-center">
+                      <div className={`w-20 h-20 bg-${milestone.color}-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg`}>
+                        <span className="text-3xl">{milestone.icon}</span>
+                      </div>
+                      <p className="font-bold text-slate-800 text-sm mb-1">{milestone.phase}</p>
+                      <p className="font-semibold text-slate-700 text-xs mb-1">{milestone.title}</p>
+                      <p className="text-xs text-slate-600">{milestone.description}</p>
+                    </div>
+                    {index < roadmap.length - 1 && (
+                      <div className="flex-1 border-t-4 border-dashed border-slate-300 mx-2 mt-[-40px]"></div>
+                    )}
                   </div>
-                  <p className="font-bold text-slate-800">Current</p>
-                  <p className="text-sm text-slate-600">{formData.currentRole}</p>
-                </div>
-                <div className="flex-1 border-t-4 border-dashed border-blue-300 mx-4"></div>
-                <div className="flex-1 text-center">
-                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                  <p className="font-bold text-slate-800">6 Months</p>
-                  <p className="text-sm text-slate-600">{formData.sixMonthGoal || 'Goal not set'}</p>
-                </div>
-                <div className="flex-1 border-t-4 border-dashed border-purple-300 mx-4"></div>
-                <div className="flex-1 text-center">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl">🌟</span>
-                  </div>
-                  <p className="font-bold text-slate-800">Long-term</p>
-                  <p className="text-sm text-slate-600">{formData.careerGrowth}</p>
-                </div>
+                ))}
               </div>
+            </div>
+            <div className="mt-6 p-4 bg-white rounded-lg border-2 border-indigo-200">
+              <p className="text-sm text-slate-700">
+                <strong>💡 Roadmap Insight:</strong> This personalized journey is based on your current skills ({avgRating}/5), 
+                your goal to develop <strong>{formData.skillsToImprove[0] || 'new skills'}</strong>, 
+                and your aspiration to <strong>{formData.careerGrowth}</strong>.
+              </p>
             </div>
           </Card>
 
