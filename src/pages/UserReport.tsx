@@ -41,7 +41,10 @@ export default function UserReport() {
   const calculateAverageRating = () => {
     if (!user?.skill_ratings) return 0
     const ratings = Object.values(user.skill_ratings)
-    const sum = ratings.reduce((acc: number, val) => acc + Number(val), 0)
+    const sum = ratings.reduce((acc: number, val) => {
+      const rating = typeof val === 'object' ? val.rating : Number(val)
+      return acc + rating
+    }, 0)
     return (sum / ratings.length).toFixed(1)
   }
 
@@ -159,20 +162,23 @@ export default function UserReport() {
               </span>
             </h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(user.skill_ratings).map(([skill, rating]) => (
-                <div key={skill} className="bg-slate-50 p-4 rounded-lg hover:bg-slate-100 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold text-slate-700 text-sm">{skill}</p>
-                    <span className="text-xl font-bold text-purple-600">{rating}/5</span>
+              {Object.entries(user.skill_ratings).map(([skill, ratingData]) => {
+                const rating = typeof ratingData === 'object' ? ratingData.rating : Number(ratingData)
+                return (
+                  <div key={skill} className="bg-slate-50 p-4 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-semibold text-slate-700 text-sm">{skill}</p>
+                      <span className="text-xl font-bold text-purple-600">{rating}/5</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all"
+                        style={{ width: `${(rating / 5) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all"
-                      style={{ width: `${(Number(rating) / 5) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Card>
         )}
@@ -253,17 +259,17 @@ export default function UserReport() {
               <p className="text-slate-700">{user.six_month_goal || 'Not specified'}</p>
             </div>
             <div className="bg-white p-5 rounded-lg">
-              <p className="text-sm font-semibold text-blue-800 mb-2">Design Tools</p>
-              <p className="text-slate-700">{user.design_tools?.join(', ') || 'Not specified'}</p>
+              <p className="text-sm font-semibold text-blue-800 mb-2">Goal Importance</p>
+              <p className="text-slate-700">{user.goal_importance || 'Not specified'}</p>
             </div>
           </div>
         </Card>
 
         {/* Community & Mentorship */}
-        {(user.teaching_topic || user.mentor_interest || user.community_contribution) && (
+        {(user.teaching_topic || user.mentor_interest) && (
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
             <h3 className="text-2xl font-bold text-purple-900 mb-6">Community & Mentorship</h3>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {user.teaching_topic && (
                 <div className="bg-white p-5 rounded-lg">
                   <p className="text-sm font-semibold text-purple-800 mb-2">Teaching Topic</p>
@@ -274,12 +280,6 @@ export default function UserReport() {
                 <div className="bg-white p-5 rounded-lg">
                   <p className="text-sm font-semibold text-purple-800 mb-2">Mentor Interest</p>
                   <p className="text-slate-700">{user.mentor_interest}</p>
-                </div>
-              )}
-              {user.community_contribution && (
-                <div className="bg-white p-5 rounded-lg">
-                  <p className="text-sm font-semibold text-purple-800 mb-2">Community Contribution</p>
-                  <p className="text-slate-700">{user.community_contribution}</p>
                 </div>
               )}
             </div>
