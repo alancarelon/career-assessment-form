@@ -1689,10 +1689,7 @@ export default function UXGrowthJourney() {
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-center gap-4 mt-8">
-            <Button variant="outline" onClick={() => setShowResults(false)}>
-              Back to Assessment
-            </Button>
+          <div className="flex justify-center mt-8">
             <Button onClick={() => window.print()} className="flex items-center gap-2">
               <Download className="w-4 h-4" />
               Download Report
