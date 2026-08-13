@@ -1057,32 +1057,6 @@ export default function UXGrowthJourney() {
     const roadmap = getPersonalizedRoadmap()
 
     // Generate personalized insights
-    const getPersonalizedInsights = () => {
-      const insights = []
-      
-      if (formData.strengths.length > 0) {
-        insights.push(`Your top strength is ${formData.strengths[0]} - leverage this in your daily work!`)
-      }
-      
-      if (formData.skillsToImprove.length > 0) {
-        insights.push(`Focus on developing ${formData.skillsToImprove[0]} to reach the next level.`)
-      }
-      
-      if (formData.learningStyle.length > 0) {
-        insights.push(`Your ${formData.learningStyle[0]} learning style is perfect for ${formData.learningStyle[0] === 'Hands-on practice' ? 'project-based courses' : 'structured learning programs'}.`)
-      }
-      
-      if (parseFloat(avgRating) >= 4) {
-        insights.push("You're performing at a high level - consider mentoring others!")
-      } else if (parseFloat(avgRating) >= 3) {
-        insights.push("You're on a solid growth trajectory - keep pushing forward!")
-      }
-      
-      return insights
-    }
-
-    const insights = getPersonalizedInsights()
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-12 px-4">
         <div className="max-w-7xl mx-auto">
@@ -1099,9 +1073,9 @@ export default function UXGrowthJourney() {
             </p>
             <button
               onClick={() => setShowStory(true)}
-              className="mt-4 text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-2 mx-auto hover:underline transition-all"
+              className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full font-semibold text-base flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
             >
-              <span>📖</span> Read Your Journey Story
+              <span className="text-xl">📖</span> Read Your Journey Story
             </button>
           </div>
 
@@ -1605,22 +1579,6 @@ export default function UXGrowthJourney() {
                 </div>
               )
             })()}
-          </Card>
-
-          {/* Personalized Insights */}
-          <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
-            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span>💡</span>
-              Your Personalized Insights
-            </h3>
-            <div className="space-y-3">
-              {insights.map((insight, index) => (
-                <div key={index} className="flex items-start gap-3 p-4 bg-white rounded-lg border-l-4 border-orange-400">
-                  <span className="text-xl mt-1">✓</span>
-                  <p className="text-slate-700">{insight}</p>
-                </div>
-              ))}
-            </div>
           </Card>
 
           {/* Story Modal */}
