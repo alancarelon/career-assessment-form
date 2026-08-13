@@ -12,7 +12,6 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     roles: [] as string[],
     performance: 'all' as 'all' | 'high' | 'ontrack' | 'needs',
@@ -302,150 +301,115 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        {/* Filter Bar */}
-        <Card className="mb-8">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors rounded-lg"
-          >
-            <div className="flex items-center gap-3">
-              <Filter className="w-5 h-5 text-purple-600" />
-              <span className="font-semibold text-slate-800">Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  {activeFilterCount}
-                </span>
-              )}
-            </div>
-            <span className="text-slate-400">{showFilters ? '▲' : '▼'}</span>
-          </button>
+        {/* Compact Filter Bar */}
+        <div className="bg-white border border-slate-200 rounded-lg p-3 mb-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Left side - Filter controls */}
+            <div className="flex items-center gap-3 flex-wrap flex-1">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-slate-400" />
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Filters:</span>
+              </div>
 
-          {showFilters && (
-            <div className="p-4 pt-0 space-y-4 border-t border-slate-200 mt-4">
-              {/* Role Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                <div className="flex flex-wrap gap-2">
+              {/* Role Filter - Compact */}
+              <div className="relative">
+                <select
+                  value={filters.roles[0] || 'all'}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setFilters(prev => ({
+                      ...prev,
+                      roles: value === 'all' ? [] : [value]
+                    }))
+                  }}
+                  className="text-sm border border-slate-300 rounded-md px-3 py-1.5 pr-8 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none cursor-pointer"
+                >
+                  <option value="all">All Roles</option>
                   {availableRoles.map(role => (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        setFilters(prev => ({
-                          ...prev,
-                          roles: prev.roles.includes(role)
-                            ? prev.roles.filter(r => r !== role)
-                            : [...prev.roles, role]
-                        }))
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        filters.roles.includes(role)
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {role}
-                    </button>
+                    <option key={role} value={role}>{role}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
-              {/* Performance Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Performance</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { value: 'all', label: 'All' },
-                    { value: 'high', label: 'High Performers (≥4.0)' },
-                    { value: 'ontrack', label: 'On Track (3.0-3.9)' },
-                    { value: 'needs', label: 'Needs Support (<3.0)' }
-                  ].map(option => (
-                    <button
-                      key={option.value}
-                      onClick={() => setFilters(prev => ({ ...prev, performance: option.value as any }))}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        filters.performance === option.value
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+              {/* Performance Filter - Compact */}
+              <div className="relative">
+                <select
+                  value={filters.performance}
+                  onChange={(e) => setFilters(prev => ({ ...prev, performance: e.target.value as any }))}
+                  className="text-sm border border-slate-300 rounded-md px-3 py-1.5 pr-8 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                >
+                  <option value="all">All Performance</option>
+                  <option value="high">High (≥4.0)</option>
+                  <option value="ontrack">On Track (3.0-3.9)</option>
+                  <option value="needs">Needs Support (&lt;3.0)</option>
+                </select>
               </div>
 
-              {/* Date Range Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Date Range</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { value: 'all', label: 'All Time' },
-                    { value: 'week', label: 'Last 7 Days' },
-                    { value: 'month', label: 'Last 30 Days' },
-                    { value: 'quarter', label: 'Last 90 Days' }
-                  ].map(option => (
-                    <button
-                      key={option.value}
-                      onClick={() => setFilters(prev => ({ ...prev, dateRange: option.value as any }))}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        filters.dateRange === option.value
-                          ? 'bg-green-600 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+              {/* Date Range Filter - Compact */}
+              <div className="relative">
+                <select
+                  value={filters.dateRange}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as any }))}
+                  className="text-sm border border-slate-300 rounded-md px-3 py-1.5 pr-8 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  <option value="week">Last 7 Days</option>
+                  <option value="month">Last 30 Days</option>
+                  <option value="quarter">Last 90 Days</option>
+                </select>
               </div>
 
               {/* Clear Filters */}
               {activeFilterCount > 0 && (
-                <div className="pt-2 border-t border-slate-200">
-                  <Button variant="outline" onClick={clearAllFilters} className="text-sm">
-                    <X className="w-4 h-4 mr-2" />
-                    Clear All Filters
-                  </Button>
-                </div>
+                <button
+                  onClick={clearAllFilters}
+                  className="text-xs text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-slate-100 rounded transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                  Clear
+                </button>
               )}
             </div>
-          )}
 
-          {/* Active Filter Chips */}
+            {/* Right side - Results count */}
+            <div className="text-xs text-slate-500">
+              <span className="font-semibold text-slate-700">{filteredSubmissions.length}</span>
+              <span className="mx-1">/</span>
+              <span>{submissions.length}</span>
+              <span className="ml-1">results</span>
+            </div>
+          </div>
+
+          {/* Active Filter Tags - Minimal */}
           {activeFilterCount > 0 && (
-            <div className="px-4 pb-4 flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
               {filters.roles.map(role => (
-                <span key={role} className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Role: {role}
-                  <button onClick={() => removeRoleFilter(role)} className="hover:bg-purple-200 rounded-full p-0.5">
-                    <X className="w-3 h-3" />
+                <span key={role} className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">
+                  {role}
+                  <button onClick={() => removeRoleFilter(role)} className="hover:bg-slate-200 rounded p-0.5">
+                    <X className="w-2.5 h-2.5" />
                   </button>
                 </span>
               ))}
               {filters.performance !== 'all' && (
-                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Performance: {filters.performance === 'high' ? 'High' : filters.performance === 'ontrack' ? 'On Track' : 'Needs Support'}
-                  <button onClick={() => setFilters(prev => ({ ...prev, performance: 'all' }))} className="hover:bg-blue-200 rounded-full p-0.5">
-                    <X className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">
+                  {filters.performance === 'high' ? 'High' : filters.performance === 'ontrack' ? 'On Track' : 'Needs Support'}
+                  <button onClick={() => setFilters(prev => ({ ...prev, performance: 'all' }))} className="hover:bg-slate-200 rounded p-0.5">
+                    <X className="w-2.5 h-2.5" />
                   </button>
                 </span>
               )}
               {filters.dateRange !== 'all' && (
-                <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Date: {filters.dateRange === 'week' ? 'Last 7 Days' : filters.dateRange === 'month' ? 'Last 30 Days' : 'Last 90 Days'}
-                  <button onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))} className="hover:bg-green-200 rounded-full p-0.5">
-                    <X className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">
+                  {filters.dateRange === 'week' ? '7d' : filters.dateRange === 'month' ? '30d' : '90d'}
+                  <button onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))} className="hover:bg-slate-200 rounded p-0.5">
+                    <X className="w-2.5 h-2.5" />
                   </button>
                 </span>
               )}
             </div>
           )}
-
-          {/* Results Count */}
-          <div className="px-4 pb-4 text-sm text-slate-600">
-            Showing <span className="font-semibold text-slate-900">{filteredSubmissions.length}</span> of <span className="font-semibold text-slate-900">{submissions.length}</span> submissions
-          </div>
-        </Card>
+        </div>
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
