@@ -1421,81 +1421,91 @@ export default function UXGrowthJourney() {
                   </div>
                 </div>
                 
-                <div className="p-8 space-y-8">
+                <div className="p-8">
                   <div className="prose prose-lg max-w-none">
-                    <p className="text-xl text-slate-700 leading-relaxed">
-                      As a <span className="font-semibold text-purple-600">{formData.currentRole}</span>, {formData.name} brings 
-                      a unique blend of skills and passion to every project. Currently at the <span className="font-semibold">{currentLevel.level}</span> level 
-                      with an overall rating of <span className="font-semibold text-blue-600">{avgRating}/5.0</span>, the journey ahead is filled with opportunity.
-                    </p>
-                  </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-6">About</h3>
+                    
+                    <div className="space-y-6 text-slate-700 leading-relaxed">
+                      <p>
+                        I'm a <span className="font-semibold">{formData.currentRole}</span> who believes that great design comes from understanding people, not just pixels. 
+                        Currently at the <span className="font-semibold">{currentLevel.level}</span> level with a {avgRating}/5.0 rating, 
+                        but honestly, I'm more excited about the journey than the numbers.
+                      </p>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-green-50 p-6 rounded-xl">
-                      <h3 className="text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
-                        <span>✨</span> Strengths
-                      </h3>
-                      <ul className="space-y-2">
-                        {formData.strengths.map((s, i) => (
-                          <li key={i} className="text-slate-700 flex items-start gap-2">
-                            <span className="text-green-600 mt-1">•</span>
-                            <span>{s}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {formData.teammatesFeedback && (
-                        <p className="mt-4 text-sm text-green-800 italic border-l-2 border-green-500 pl-3">
-                          "{formData.teammatesFeedback}"
+                      <p className="font-semibold text-slate-900">Here's what makes me tick:</p>
+
+                      <div className="space-y-4">
+                        <p>
+                          <span className="font-semibold">1.)</span> My superpower is <span className="font-semibold text-purple-600">{formData.strengths[0]}</span>. 
+                          {formData.strengths.length > 1 && (
+                            <span> I also bring strong skills in {formData.strengths.slice(1, 3).join(' and ')}. </span>
+                          )}
+                          {formData.teammatesFeedback && (
+                            <span className="italic"> My teammates say: "{formData.teammatesFeedback}"</span>
+                          )}
                         </p>
-                      )}
-                    </div>
 
-                    <div className="bg-orange-50 p-6 rounded-xl">
-                      <h3 className="text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">
-                        <span>🎯</span> Growth Focus
-                      </h3>
-                      <ul className="space-y-2">
-                        {formData.skillsToImprove.map((s, i) => (
-                          <li key={i} className="text-slate-700 flex items-start gap-2">
-                            <span className="text-orange-600 mt-1">•</span>
-                            <span>{s}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {formData.learningStyle.length > 0 && (
-                        <p className="mt-4 text-sm text-orange-800">
-                          <span className="font-semibold">Learning style:</span> {formData.learningStyle[0]}
+                        <p>
+                          <span className="font-semibold">2.)</span> I'm actively working on leveling up my <span className="font-semibold text-orange-600">{formData.skillsToImprove[0]}</span>. 
+                          {formData.learningStyle.length > 0 && (
+                            <span> I learn best through {formData.learningStyle[0].toLowerCase()}, so you'll often find me diving deep into hands-on projects.</span>
+                          )}
                         </p>
+
+                        {formData.proudAccomplishment && (
+                          <p>
+                            <span className="font-semibold">3.)</span> Recently, I'm proud of this: <span className="italic">"{formData.proudAccomplishment}"</span> 
+                            {' '}It reminded me why I love this work—creating real impact for real people.
+                          </p>
+                        )}
+
+                        <p>
+                          <span className="font-semibold">{formData.proudAccomplishment ? '4.)' : '3.)'}</span> My 6-month goal is simple: <span className="font-semibold text-blue-600">{formData.sixMonthGoal || 'keep building momentum and shipping great work'}</span>. 
+                          Long-term? I want to {formData.careerGrowth.toLowerCase()}. No shortcuts, just consistent growth.
+                        </p>
+
+                        {(formData.teachingTopic || formData.mentorInterest) && (
+                          <p>
+                            <span className="font-semibold">{formData.proudAccomplishment ? '5.)' : '4.)'}</span> I believe in giving back. 
+                            {formData.teachingTopic && (
+                              <span> I love sharing what I know about <span className="font-semibold">{formData.teachingTopic}</span></span>
+                            )}
+                            {formData.mentorInterest && (
+                              <span>{formData.teachingTopic ? ' and' : ''} I'm passionate about mentoring others in <span className="font-semibold">{formData.mentorInterest}</span></span>
+                            )}
+                            . We all stand on the shoulders of those who helped us—it's time to pay it forward.
+                          </p>
+                        )}
+
+                        <p>
+                          <span className="font-semibold">{(() => {
+                            let count = 3;
+                            if (formData.proudAccomplishment) count++;
+                            if (formData.teachingTopic || formData.mentorInterest) count++;
+                            return count + '.)';
+                          })()}</span> I don't like to sugarcoat things, so here's the truth: I'm not perfect. 
+                          I have {formData.skillsToImprove.length} areas I'm actively improving. 
+                          But I show up every day, I'm curious, and I'm committed to getting better. That's what matters.
+                        </p>
+                      </div>
+
+                      <div className="mt-8 pt-6 border-t-2 border-slate-200">
+                        <p className="text-slate-600">
+                          <span className="font-semibold text-slate-900">Bottom line:</span> I love what I do. I'm here to create meaningful experiences, 
+                          collaborate with amazing people, and keep learning. If you want to chat about UX, design, or just exchange ideas—reach out. 
+                          I'm always up for a good conversation. 🚀
+                        </p>
+                      </div>
+
+                      {benchmarks.filter(b => b.status === 'exceeds' || b.status === 'meets').length > 0 && (
+                        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                          <p className="text-sm text-slate-700">
+                            <span className="font-semibold">Quick stats:</span> {benchmarks.filter(b => b.status === 'exceeds' || b.status === 'meets').length} skill categories 
+                            on track • {formData.strengths.length} core strengths • {formData.skillsToImprove.length} growth opportunities
+                          </p>
+                        </div>
                       )}
                     </div>
-                  </div>
-
-                  {formData.proudAccomplishment && (
-                    <div className="bg-blue-50 p-6 rounded-xl">
-                      <h3 className="text-xl font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        <span>🏆</span> Recent Achievement
-                      </h3>
-                      <p className="text-slate-700 italic">"{formData.proudAccomplishment}"</p>
-                    </div>
-                  )}
-
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
-                    <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">
-                      <span>🚀</span> Looking Ahead
-                    </h3>
-                    <div className="space-y-3 text-slate-700">
-                      <p><span className="font-semibold text-purple-800">6-month goal:</span> {formData.sixMonthGoal || 'Building momentum'}</p>
-                      <p><span className="font-semibold text-pink-800">Career vision:</span> {formData.careerGrowth}</p>
-                      {formData.teachingTopic && (
-                        <p><span className="font-semibold text-indigo-800">Ready to teach:</span> {formData.teachingTopic}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="text-center py-6 border-t-2 border-slate-200">
-                    <p className="text-lg text-slate-600 italic">
-                      "The journey of a thousand miles begins with a single step. Keep growing!" 🌱
-                    </p>
                   </div>
                 </div>
               </div>
