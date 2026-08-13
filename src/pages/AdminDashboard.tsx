@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart, Eye } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -7,6 +8,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 
 export default function AdminDashboard() {
+  const navigate = useNavigate()
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -435,6 +437,17 @@ export default function AdminDashboard() {
                       <p><span className="text-slate-500">Teaching Topic:</span> {submission.teaching_topic || 'Not specified'}</p>
                       <p><span className="text-slate-500">Mentor Interest:</span> {submission.mentor_interest || 'Not specified'}</p>
                     </div>
+                  </div>
+
+                  {/* View Details Button */}
+                  <div className="mt-4 pt-3 border-t border-slate-200">
+                    <Button
+                      onClick={() => navigate(`/admin/user/${submission.id}`)}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Detailed Report
+                    </Button>
                   </div>
                 </div>
               ))}
