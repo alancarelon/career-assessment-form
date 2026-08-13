@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ArrowRight, ArrowLeft, Sparkles, Target, Users } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Sparkles, Target, Users, TrendingUp, Award, Zap, Download } from 'lucide-react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import Button from './Button'
 import Card from './Card'
 import Badge from './Badge'
@@ -832,126 +833,226 @@ export default function UXGrowthJourney() {
       ? ((totalXP - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100
       : 100
 
+    // Calculate average skill rating
+    const skillRatings = Object.values(formData.skillRatings)
+    const avgRating = skillRatings.length > 0
+      ? (skillRatings.reduce((sum, skill) => sum + skill.rating, 0) / skillRatings.length).toFixed(1)
+      : '0.0'
+
+    // Prepare radar chart data by grouping skills
+    const getRadarDataByCategory = () => {
+      const skills = Object.entries(formData.skillRatings)
+      const categories: Record<string, Array<{skill: string, rating: number, fullMark: number}>> = {
+        'Core Skills': [],
+        'Technical Skills': [],
+        'Soft Skills': []
+      }
+      
+      skills.forEach(([skillName, data]) => {
+        const skillData = { skill: skillName, rating: data.rating, fullMark: 5 }
+        
+        // Categorize skills (you can customize this logic)
+        if (skillName.toLowerCase().includes('research') || skillName.toLowerCase().includes('testing')) {
+          categories['Core Skills'].push(skillData)
+        } else if (skillName.toLowerCase().includes('design') || skillName.toLowerCase().includes('prototype')) {
+          categories['Technical Skills'].push(skillData)
+        } else {
+          categories['Soft Skills'].push(skillData)
+        }
+      })
+      
+      return categories
+    }
+
+    const radarCategories = getRadarDataByCategory()
+
+    // Generate personalized insights
+    const getPersonalizedInsights = () => {
+      const insights = []
+      
+      if (formData.strengths.length > 0) {
+        insights.push(`Your top strength is ${formData.strengths[0]} - leverage this in your daily work!`)
+      }
+      
+      if (formData.skillsToImprove.length > 0) {
+        insights.push(`Focus on developing ${formData.skillsToImprove[0]} to reach the next level.`)
+      }
+      
+      if (formData.learningStyle.length > 0) {
+        insights.push(`Your ${formData.learningStyle[0]} learning style is perfect for ${formData.learningStyle[0] === 'Hands-on practice' ? 'project-based courses' : 'structured learning programs'}.`)
+      }
+      
+      if (parseFloat(avgRating) >= 4) {
+        insights.push("You're performing at a high level - consider mentoring others!")
+      } else if (parseFloat(avgRating) >= 3) {
+        insights.push("You're on a solid growth trajectory - keep pushing forward!")
+      }
+      
+      return insights
+    }
+
+    const insights = getPersonalizedInsights()
+
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12 animate-fade-in">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Sparkles className="w-12 h-12 text-achievement-600" />
-              <h1 className="text-4xl font-bold gradient-text">Your UX Growth Journey</h1>
+              <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent">
+                Your Career Insights
+              </h1>
             </div>
             <p className="text-xl text-slate-600">
-              Here's your personalized growth roadmap, {formData.name}!
+              Data-driven analysis of your UX journey, {formData.name}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Career Level Card */}
-            <Card>
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
               <div className="text-center">
-                <div className="text-6xl mb-4">{currentLevelDisplay.icon}</div>
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">{currentLevel.level}</h2>
-                <p className="text-slate-600 mb-4">{currentLevelDisplay.description}</p>
-                <div className="bg-slate-100 rounded-full h-3 mb-2">
-                  <div 
-                    className="bg-gradient-to-r from-growth-500 to-achievement-500 h-3 rounded-full transition-all"
-                    style={{ width: `${progressToNext}%` }}
-                  />
-                </div>
-                <p className="text-sm text-slate-600">
-                  {totalXP} XP {nextLevel ? `• ${nextLevel.minXP - totalXP} XP to ${nextLevel.level}` : '• Max Level!'}
-                </p>
+                <div className="text-5xl mb-3">{currentLevelDisplay.icon}</div>
+                <h3 className="text-sm font-semibold text-purple-600 mb-1">Career Level</h3>
+                <p className="text-2xl font-bold text-slate-800">{currentLevel.level}</p>
+                <p className="text-xs text-slate-600 mt-2">{currentLevelDisplay.description}</p>
               </div>
             </Card>
 
-            {/* Role & XP Card */}
-            <Card>
-              <h3 className="text-xl font-bold text-slate-800 mb-4">Your Profile</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-slate-600">Role</p>
-                  <p className="font-bold text-slate-800">{formData.currentRole}</p>
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <div className="text-center">
+                <TrendingUp className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-blue-600 mb-1">Overall Score</h3>
+                <p className="text-2xl font-bold text-slate-800">{avgRating} / 5.0</p>
+                <div className="flex justify-center gap-1 mt-2">
+                  {[1,2,3,4,5].map(star => (
+                    <span key={star} className={star <= Math.round(parseFloat(avgRating)) ? 'text-yellow-400' : 'text-slate-300'}>⭐</span>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-sm text-slate-600">Total Career XP</p>
-                  <p className="font-bold text-slate-800 text-2xl">{totalXP} XP</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">Career Aspiration</p>
-                  <p className="font-bold text-slate-800">{formData.careerGrowth}</p>
-                </div>
+              </div>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <div className="text-center">
+                <Award className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-green-600 mb-1">Top Strength</h3>
+                <p className="text-lg font-bold text-slate-800">{formData.strengths[0] || 'N/A'}</p>
+                <p className="text-xs text-slate-600 mt-2">Your superpower!</p>
               </div>
             </Card>
           </div>
 
-          {/* Top Strengths */}
-          <Card className="mb-6">
-            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span>✨</span>
-              Your Superpowers
-            </h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              {formData.strengths.map((strength, index) => (
-                <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-lg border-2 border-purple-200">
-                  <p className="font-bold text-slate-800">{strength}</p>
-                </div>
-              ))}
-            </div>
-            {formData.proudAccomplishment && (
-              <div className="mt-6 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
-                <p className="text-sm font-bold text-slate-700 mb-2">🏆 Proud Accomplishment</p>
-                <p className="text-slate-700">{formData.proudAccomplishment}</p>
+          {/* Skill Radar Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {Object.entries(radarCategories).map(([category, data]) => (
+              data.length > 0 && (
+                <Card key={category}>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 text-center">{category}</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <RadarChart data={data}>
+                      <PolarGrid stroke="#e2e8f0" />
+                      <PolarAngleAxis 
+                        dataKey="skill" 
+                        tick={{ fill: '#64748b', fontSize: 10 }}
+                      />
+                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: '#64748b' }} />
+                      <Radar
+                        name={category}
+                        dataKey="rating"
+                        stroke={category === 'Core Skills' ? '#3b82f6' : category === 'Technical Skills' ? '#10b981' : '#8b5cf6'}
+                        fill={category === 'Core Skills' ? '#3b82f6' : category === 'Technical Skills' ? '#10b981' : '#8b5cf6'}
+                        fillOpacity={0.6}
+                      />
+                      <Tooltip />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </Card>
+              )
+            ))}
+          </div>
+
+          {/* Strengths vs Growth */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-6 h-6 text-purple-600" />
+                <h3 className="text-xl font-bold text-slate-800">💪 Your Superpowers</h3>
               </div>
-            )}
-          </Card>
+              <div className="space-y-3">
+                {formData.strengths.map((strength, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-purple-200">
+                    <span className="text-2xl">{['�', '✨', '⚡'][index % 3]}</span>
+                    <p className="font-semibold text-slate-800">{strength}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
 
-          {/* Growth Areas */}
-          <Card className="mb-6">
-            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span>📈</span>
-              Growth Opportunities
+            <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-6 h-6 text-green-600" />
+                <h3 className="text-xl font-bold text-slate-800">🎯 Growth Opportunities</h3>
+              </div>
+              <div className="space-y-3">
+                {formData.skillsToImprove.map((skill, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-green-200">
+                    <span className="text-2xl">{['📈', '🚀', '💡'][index % 3]}</span>
+                    <p className="font-semibold text-slate-800">{skill}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Career Roadmap */}
+          <Card className="mb-8 bg-gradient-to-r from-blue-50 to-purple-50">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <span>🗺️</span>
+              Your Career Roadmap
             </h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              {formData.skillsToImprove.map((skill, index) => (
-                <div key={index} className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-lg border-2 border-green-200">
-                  <p className="font-bold text-slate-800">{skill}</p>
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 text-center">
+                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">📍</span>
+                  </div>
+                  <p className="font-bold text-slate-800">Current</p>
+                  <p className="text-sm text-slate-600">{formData.currentRole}</p>
                 </div>
-              ))}
+                <div className="flex-1 border-t-4 border-dashed border-blue-300 mx-4"></div>
+                <div className="flex-1 text-center">
+                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">🎯</span>
+                  </div>
+                  <p className="font-bold text-slate-800">6 Months</p>
+                  <p className="text-sm text-slate-600">{formData.sixMonthGoal || 'Goal not set'}</p>
+                </div>
+                <div className="flex-1 border-t-4 border-dashed border-purple-300 mx-4"></div>
+                <div className="flex-1 text-center">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">🌟</span>
+                  </div>
+                  <p className="font-bold text-slate-800">Long-term</p>
+                  <p className="text-sm text-slate-600">{formData.careerGrowth}</p>
+                </div>
+              </div>
             </div>
           </Card>
 
-          {/* 6-Month Goal */}
-          {formData.sixMonthGoal && (
-            <Card className="mb-6">
-              <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <span>🎯</span>
-                Your 6-Month Goal
-              </h3>
-              <p className="text-lg text-slate-700 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-lg border-2 border-orange-200">
-                {formData.sixMonthGoal}
-              </p>
-            </Card>
-          )}
-
-          {/* Community Contribution */}
-          <Card className="mb-6">
+          {/* Personalized Insights */}
+          <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
             <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span>🤝</span>
-              Community Contribution
+              <span>💡</span>
+              Your Personalized Insights
             </h3>
-            <div className="space-y-4">
-              {formData.teachingTopic && (
-                <div>
-                  <p className="text-sm font-bold text-slate-600 mb-1">What I Can Teach</p>
-                  <p className="text-slate-800">{formData.teachingTopic}</p>
+            <div className="space-y-3">
+              {insights.map((insight, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 bg-white rounded-lg border-l-4 border-orange-400">
+                  <span className="text-xl mt-1">✓</span>
+                  <p className="text-slate-700">{insight}</p>
                 </div>
-              )}
-              {formData.mentorInterest && (
-                <div>
-                  <p className="text-sm font-bold text-slate-600 mb-1">Mentorship Interest</p>
-                  <p className="text-slate-800">{formData.mentorInterest}</p>
-                </div>
-              )}
+              ))}
             </div>
           </Card>
 
@@ -960,8 +1061,9 @@ export default function UXGrowthJourney() {
             <Button variant="outline" onClick={() => setShowResults(false)}>
               Back to Assessment
             </Button>
-            <Button onClick={() => window.print()}>
-              Print Summary
+            <Button onClick={() => window.print()} className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Download Report
             </Button>
           </div>
         </div>
