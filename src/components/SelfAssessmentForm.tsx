@@ -86,6 +86,27 @@ export default function SelfAssessmentForm() {
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [existingSubmission, setExistingSubmission] = useState<{
+    created_at: string
+    name: string
+  } | null>(null)
+  const [emailLocked, setEmailLocked] = useState(false)
+
+  const checkExistingSubmission = async (email: string) => {
+    if (!email || !email.includes('@')) return null
+    
+    try {
+      const { data } = await supabase
+        .from('assessments')
+        .select('created_at, name')
+        .eq('email', email.toLowerCase().trim())
+        .single()
+      
+      return data
+    } catch {
+      return null
+    }
+  }
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -164,6 +185,9 @@ export default function SelfAssessmentForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (emailLocked) return // Extra safety check
+    
     setIsSubmitting(true)
     setError(null)
 
@@ -173,7 +197,7 @@ export default function SelfAssessmentForm() {
         .insert([
           {
             name: formData.name,
-            email: formData.email,
+            email: formData.email.toLowerCase().trim(),
             current_role: formData.currentRole,
             years_of_experience: formData.yearsOfExperience,
             ux_research_skills: formData.uxResearchSkills,
@@ -187,7 +211,19 @@ export default function SelfAssessmentForm() {
           },
         ])
 
-      if (supabaseError) throw supabaseError
+      if (supabaseError) {
+        // Check if it's a duplicate email constraint violation
+        if (supabaseError.code === '23505') {
+          setError('This email has already been used for a submission.')
+          const existing = await checkExistingSubmission(formData.email)
+          if (existing) {
+            setExistingSubmission(existing)
+            setEmailLocked(true)
+          }
+          return
+        }
+        throw supabaseError
+      }
 
       exportToExcel()
       setSubmitted(true)
@@ -195,9 +231,9 @@ export default function SelfAssessmentForm() {
         setSubmitted(false)
         setFormData(initialFormData)
       }, 3000)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting form:', err)
-      setError('Failed to submit form. Please try again.')
+      setError(err.message || 'Failed to submit form. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -253,6 +289,42 @@ export default function SelfAssessmentForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Duplicate Submission Warning */}
+          {existingSubmission && (
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 mb-1">
+                    Assessment Already Submitted
+                  </h3>
+                  <p className="text-sm text-amber-800 mb-2">
+                    You already submitted an assessment on{' '}
+                    <strong>
+                      {new Date(existingSubmission.created_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </strong>
+                    . Each person can only submit once.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, email: '' })
+                      setExistingSubmission(null)
+                      setEmailLocked(false)
+                    }}
+                    className="text-sm text-amber-700 underline hover:text-amber-900 font-medium"
+                  >
+                    Use a different email
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Personal Information */}
           <Card>
             <h2 className="text-2xl font-bold text-slate-800 mb-6">Personal Information</h2>
@@ -279,7 +351,22 @@ export default function SelfAssessmentForm() {
                   required
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  onBlur={async (e) => {
+                    const existing = await checkExistingSubmission(e.target.value)
+                    if (existing) {
+                      setExistingSubmission(existing)
+                      setEmailLocked(true)
+                    } else {
+                      setExistingSubmission(null)
+                      setEmailLocked(false)
+                    }
+                  }}
+                  disabled={emailLocked}
+                  className={`w-full px-4 py-3 rounded-lg border-2 ${
+                    emailLocked 
+                      ? 'border-amber-300 bg-amber-50 cursor-not-allowed' 
+                      : 'border-slate-200 focus:border-growth-500'
+                  } focus:outline-none transition-colors`}
                   placeholder="john.doe@company.com"
                 />
               </div>
@@ -473,9 +560,14 @@ export default function SelfAssessmentForm() {
 
           {/* Submit Button */}
           <div className="flex justify-center">
-            <Button type="submit" size="lg" className="min-w-[300px]" disabled={isSubmitting}>
+            <Button type="submit" size="lg" className="min-w-[300px]" disabled={isSubmitting || emailLocked}>
               <Download className="w-5 h-5 mr-2" />
-              {isSubmitting ? 'Submitting...' : 'Submit & Download Excel'}
+              {emailLocked 
+                ? 'Assessment Already Submitted' 
+                : isSubmitting 
+                  ? 'Submitting...' 
+                  : 'Submit & Download Excel'
+              }
             </Button>
           </div>
         </form>
