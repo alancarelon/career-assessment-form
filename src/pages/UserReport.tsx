@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Mail, User, TrendingUp, Award, Target, BarChart3, Calendar } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
+import { roleBasedQuestions } from '../data/roleQuestions'
 import Card from '../components/Card'
 import Button from '../components/Button'
 
@@ -151,37 +152,135 @@ export default function UserReport() {
           </Card>
         </div>
 
-        {/* Skill Ratings */}
-        {user.skill_ratings && Object.keys(user.skill_ratings).length > 0 && (
-          <Card>
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-purple-600" />
-              Skill Ratings
-              <span className="ml-auto text-lg font-semibold text-purple-600">
-                Average: {avgRating}/5.0
-              </span>
-            </h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(user.skill_ratings).map(([skill, ratingData]) => {
-                const rating = typeof ratingData === 'object' ? ratingData.rating : Number(ratingData)
-                return (
-                  <div key={skill} className="bg-slate-50 p-4 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-semibold text-slate-700 text-sm">{skill}</p>
-                      <span className="text-xl font-bold text-purple-600">{rating}/5</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div 
-                        className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all"
-                        style={{ width: `${(rating / 5) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )
-              })}
+        {/* Skill Ratings by Category */}
+        {user.skill_ratings && Object.keys(user.skill_ratings).length > 0 && (() => {
+          const roleQuestions = roleBasedQuestions[user.current_role]
+          if (!roleQuestions) {
+            return (
+              <Card>
+                <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                  Skill Ratings
+                  <span className="ml-auto text-lg font-semibold text-purple-600">
+                    Average: {avgRating}/5.0
+                  </span>
+                </h3>
+                <p className="text-slate-600">No category information available for this role.</p>
+              </Card>
+            )
+          }
+
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                  Skill Ratings by Category
+                </h3>
+                <div className="bg-purple-100 px-4 py-2 rounded-lg">
+                  <span className="text-sm font-semibold text-purple-800">Overall Average: </span>
+                  <span className="text-2xl font-bold text-purple-600">{avgRating}/5.0</span>
+                </div>
+              </div>
+
+              {roleQuestions.skillCategories
+                .filter(cat => cat.questionType !== 'multiselect')
+                .map((category, idx) => {
+                  // Get skills for this category
+                  const categorySkills = category.skills
+                    .map(skill => {
+                      const skillName = typeof skill === 'string' ? skill : skill.name
+                      const ratingData = user.skill_ratings?.[skillName]
+                      if (!ratingData) return null
+                      const rating = typeof ratingData === 'object' ? ratingData.rating : Number(ratingData)
+                      const idealRating = typeof skill === 'object' ? skill.idealRating : 5
+                      return { skillName, rating, idealRating }
+                    })
+                    .filter(Boolean)
+
+                  if (categorySkills.length === 0) return null
+
+                  // Calculate category average
+                  const categoryAvg = (categorySkills.reduce((sum, s) => sum + (s?.rating || 0), 0) / categorySkills.length).toFixed(1)
+
+                  return (
+                    <Card key={idx} className="overflow-hidden">
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-b-2 border-purple-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-xl font-bold text-slate-900">{category.category}</h4>
+                            <p className="text-sm text-slate-600 mt-1">{category.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-slate-600">Category Average</p>
+                            <p className="text-3xl font-bold text-purple-600">{categoryAvg}/5</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Table Format */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                              <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">Skill</th>
+                              <th className="text-center py-3 px-4 font-semibold text-slate-700 text-sm w-32">Your Rating</th>
+                              <th className="text-center py-3 px-4 font-semibold text-slate-700 text-sm w-32">Target</th>
+                              <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm w-64">Progress</th>
+                              <th className="text-center py-3 px-4 font-semibold text-slate-700 text-sm w-24">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {categorySkills.map((skill, i) => {
+                              if (!skill) return null
+                              const percentage = (skill.rating / skill.idealRating) * 100
+                              const status = percentage >= 100 ? 'exceeds' : percentage >= 80 ? 'meets' : 'growing'
+                              
+                              return (
+                                <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                  <td className="py-3 px-4 font-medium text-slate-800">{skill.skillName}</td>
+                                  <td className="py-3 px-4 text-center">
+                                    <span className="text-2xl font-bold text-purple-600">{skill.rating}</span>
+                                    <span className="text-slate-500">/5</span>
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <span className="text-lg font-semibold text-slate-600">{skill.idealRating}</span>
+                                    <span className="text-slate-400">/5</span>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <div className="w-full bg-slate-200 rounded-full h-4">
+                                      <div 
+                                        className={`h-4 rounded-full transition-all ${
+                                          status === 'exceeds' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                                          status === 'meets' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                                          'bg-gradient-to-r from-orange-500 to-amber-500'
+                                        }`}
+                                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                                      ></div>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">{percentage.toFixed(0)}% of target</p>
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                                      status === 'exceeds' ? 'bg-green-100 text-green-800' :
+                                      status === 'meets' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-orange-100 text-orange-800'
+                                    }`}>
+                                      {status === 'exceeds' ? '✓ Exceeds' : status === 'meets' ? '✓ Meets' : '→ Growing'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+                  )
+                })}
             </div>
-          </Card>
-        )}
+          )
+        })()}
 
         {/* Strengths & Growth Areas */}
         <div className="grid md:grid-cols-2 gap-6">
