@@ -1389,6 +1389,224 @@ export default function UXGrowthJourney() {
             </div>
           </Card>
 
+          {/* Personalized Learning Recommendations */}
+          <Card className="mb-8 bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <span>📚</span>
+                  Your Personalized Learning Path
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  Curated resources based on your skill gaps, learning style, and career goals
+                </p>
+              </div>
+            </div>
+
+            {(() => {
+              // Generate personalized recommendations based on their data
+              const recommendations = []
+              
+              // Get skills that need improvement (low ratings or explicitly mentioned)
+              const prioritySkills = formData.skillsToImprove.slice(0, 3)
+              const learningStyle = formData.learningStyle[0] || 'Online courses'
+              
+              // Recommendation logic based on skill gaps
+              prioritySkills.forEach((skill, index) => {
+                const skillLower = skill.toLowerCase()
+                let courses = []
+                let books = []
+                let practice = []
+                
+                // UX Research recommendations
+                if (skillLower.includes('research') || skillLower.includes('user research')) {
+                  courses = [
+                    { name: 'User Research Methods & Best Practices', platform: 'Coursera', level: 'Intermediate' },
+                    { name: 'The Complete Guide to UX Research', platform: 'Udemy', level: 'Beginner' }
+                  ]
+                  books = [
+                    { title: 'Just Enough Research', author: 'Erika Hall' },
+                    { title: 'The User Experience Team of One', author: 'Leah Buley' }
+                  ]
+                  practice = ['Conduct 5 user interviews this month', 'Create a research repository', 'Practice synthesis with affinity mapping']
+                }
+                // Design Systems
+                else if (skillLower.includes('design system') || skillLower.includes('component')) {
+                  courses = [
+                    { name: 'Design Systems with Figma', platform: 'Designlab', level: 'Advanced' },
+                    { name: 'Building Design Systems', platform: 'LinkedIn Learning', level: 'Intermediate' }
+                  ]
+                  books = [
+                    { title: 'Design Systems Handbook', author: 'DesignBetter.co' },
+                    { title: 'Atomic Design', author: 'Brad Frost' }
+                  ]
+                  practice = ['Audit an existing design system', 'Create component documentation', 'Build a mini design system']
+                }
+                // Prototyping
+                else if (skillLower.includes('prototype') || skillLower.includes('prototyping')) {
+                  courses = [
+                    { name: 'Advanced Prototyping with Figma', platform: 'Skillshare', level: 'Advanced' },
+                    { name: 'Interactive Prototyping', platform: 'Interaction Design Foundation', level: 'Intermediate' }
+                  ]
+                  books = [
+                    { title: 'Prototyping for Designers', author: 'Kathryn McElroy' },
+                    { title: 'Sketching User Experiences', author: 'Bill Buxton' }
+                  ]
+                  practice = ['Build 3 high-fidelity prototypes', 'Learn micro-interactions', 'Practice rapid prototyping']
+                }
+                // Leadership
+                else if (skillLower.includes('leadership') || skillLower.includes('management')) {
+                  courses = [
+                    { name: 'Leading Design Teams', platform: 'Reforge', level: 'Advanced' },
+                    { name: 'Design Leadership Fundamentals', platform: 'LinkedIn Learning', level: 'Intermediate' }
+                  ]
+                  books = [
+                    { title: 'The Making of a Manager', author: 'Julie Zhuo' },
+                    { title: 'Radical Candor', author: 'Kim Scott' }
+                  ]
+                  practice = ['Mentor a junior designer', 'Lead a design critique', 'Present to stakeholders monthly']
+                }
+                // Accessibility
+                else if (skillLower.includes('accessibility') || skillLower.includes('a11y')) {
+                  courses = [
+                    { name: 'Web Accessibility (WCAG 2.1)', platform: 'Deque University', level: 'Intermediate' },
+                    { name: 'Inclusive Design Principles', platform: 'Interaction Design Foundation', level: 'Beginner' }
+                  ]
+                  books = [
+                    { title: 'A Web for Everyone', author: 'Sarah Horton & Whitney Quesenbery' },
+                    { title: 'Inclusive Design Patterns', author: 'Heydon Pickering' }
+                  ]
+                  practice = ['Audit 3 designs for WCAG compliance', 'Use screen readers weekly', 'Test with assistive technology']
+                }
+                // Default/Generic UX skills
+                else {
+                  courses = [
+                    { name: `Mastering ${skill}`, platform: 'Interaction Design Foundation', level: 'Intermediate' },
+                    { name: `${skill} Fundamentals`, platform: 'Coursera', level: 'Beginner' }
+                  ]
+                  books = [
+                    { title: 'Don\'t Make Me Think', author: 'Steve Krug' },
+                    { title: 'The Design of Everyday Things', author: 'Don Norman' }
+                  ]
+                  practice = [`Practice ${skill.toLowerCase()} daily`, 'Build a portfolio project', 'Join a design community']
+                }
+                
+                recommendations.push({
+                  skill,
+                  courses,
+                  books,
+                  practice,
+                  priority: index + 1
+                })
+              })
+              
+              return (
+                <div className="space-y-6">
+                  {recommendations.map((rec, idx) => (
+                    <div key={idx} className="bg-white rounded-xl p-6 border-2 border-indigo-100">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h4 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
+                            <span className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                              {rec.priority}
+                            </span>
+                            {rec.skill}
+                          </h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Priority {rec.priority} • Based on your self-assessment
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-3 gap-4 mt-4">
+                        {/* Courses */}
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h5 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                            <span>🎓</span> Recommended Courses
+                          </h5>
+                          <div className="space-y-3">
+                            {rec.courses.map((course, i) => (
+                              <div key={i} className="text-sm">
+                                <p className="font-semibold text-slate-800">{course.name}</p>
+                                <p className="text-slate-600 text-xs mt-1">
+                                  {course.platform} • {course.level}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                          {learningStyle.toLowerCase().includes('course') && (
+                            <p className="text-xs text-blue-700 mt-3 italic">✨ Matches your learning style</p>
+                          )}
+                        </div>
+
+                        {/* Books */}
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h5 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                            <span>📖</span> Essential Reading
+                          </h5>
+                          <div className="space-y-3">
+                            {rec.books.map((book, i) => (
+                              <div key={i} className="text-sm">
+                                <p className="font-semibold text-slate-800">{book.title}</p>
+                                <p className="text-slate-600 text-xs mt-1">by {book.author}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {learningStyle.toLowerCase().includes('reading') && (
+                            <p className="text-xs text-green-700 mt-3 italic">✨ Matches your learning style</p>
+                          )}
+                        </div>
+
+                        {/* Practice */}
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h5 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
+                            <span>💪</span> Hands-on Practice
+                          </h5>
+                          <ul className="space-y-2">
+                            {rec.practice.map((item, i) => (
+                              <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                                <span className="text-orange-600 mt-0.5">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {learningStyle.toLowerCase().includes('hands-on') && (
+                            <p className="text-xs text-orange-700 mt-3 italic">✨ Matches your learning style</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Learning Path Summary */}
+                  <div className="bg-gradient-to-r from-purple-100 to-indigo-100 p-6 rounded-xl">
+                    <h4 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                      <span>🎯</span> Your 90-Day Learning Sprint
+                    </h4>
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="font-semibold text-purple-800 mb-2">Weeks 1-4: Foundation</p>
+                        <p className="text-slate-700">Start with {recommendations[0]?.skill}. Complete 1 course, read 1 book, practice daily.</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-indigo-800 mb-2">Weeks 5-8: Application</p>
+                        <p className="text-slate-700">Apply learnings to real projects. Build portfolio pieces. Get feedback.</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-800 mb-2">Weeks 9-12: Mastery</p>
+                        <p className="text-slate-700">Teach others, write about it, tackle {recommendations[1]?.skill}. Repeat cycle.</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-4 italic">
+                      💡 Tip: Focus on one skill at a time. Consistency beats intensity. Your goal to {formData.careerGrowth.toLowerCase()} 
+                      is achievable with dedicated practice.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
+          </Card>
+
           {/* Personalized Insights */}
           <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
             <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
