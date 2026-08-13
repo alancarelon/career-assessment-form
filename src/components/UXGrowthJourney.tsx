@@ -833,47 +833,82 @@ export default function UXGrowthJourney() {
       ? ((totalXP - currentLevel.minXP) / (nextLevel.minXP - currentLevel.minXP)) * 100
       : 100
 
-    // Calculate average skill rating
-    const skillRatings = Object.values(formData.skillRatings)
-    const avgRating = skillRatings.length > 0
-      ? (skillRatings.reduce((sum, skill) => sum + skill.rating, 0) / skillRatings.length).toFixed(1)
-      : '0.0'
-
-    // Get top 5 skills for cleaner radar chart
-    const getTopSkillsForRadar = () => {
-      const skills = Object.entries(formData.skillRatings)
-        .sort(([, a], [, b]) => b.rating - a.rating)
-        .slice(0, 6) // Top 6 skills only
-        .map(([skill, data]) => ({
-          skill: skill.length > 20 ? skill.substring(0, 20) + '...' : skill,
-          rating: data.rating,
-          fullMark: 5
-        }))
-      return skills
+    // Get role configuration for categories
+    const getRoleConfig = () => {
+      return roleBasedQuestions[formData.currentRole] || roleBasedQuestions["UX Designer"]
     }
 
-    const topSkills = getTopSkillsForRadar()
+    const roleConfig = getRoleConfig()
 
-    // Calculate peer comparison percentiles
-    const getPeerComparison = (): Array<{skill: string, rating: number, percentile: number}> => {
-      const allSkills = Object.entries(formData.skillRatings)
-      const comparisons: Array<{skill: string, rating: number, percentile: number}> = []
+    // Calculate CATEGORY-LEVEL averages from skill ratings
+    const getCategoryAverages = () => {
+      const categoryAverages: Array<{category: string, avgRating: number, questionCount: number}> = []
       
-      // Get top 3 skills for comparison
-      const topRated = allSkills
-        .sort(([, a], [, b]) => b.rating - a.rating)
+      roleConfig.skillCategories.forEach(cat => {
+        if (cat.isScored === false) return // Skip non-scored categories
+        
+        let totalRating = 0
+        let ratedCount = 0
+        
+        cat.skills.forEach(skill => {
+          const skillName = typeof skill === 'string' ? skill : skill.name
+          const rating = formData.skillRatings[skillName]
+          
+          if (rating && rating.rating) {
+            totalRating += rating.rating
+            ratedCount++
+          }
+        })
+        
+        if (ratedCount > 0) {
+          categoryAverages.push({
+            category: cat.category,
+            avgRating: totalRating / ratedCount,
+            questionCount: ratedCount
+          })
+        }
+      })
+      
+      return categoryAverages
+    }
+
+    const categoryAverages = getCategoryAverages()
+
+    // Calculate overall average rating
+    const avgRating = categoryAverages.length > 0
+      ? (categoryAverages.reduce((sum, cat) => sum + cat.avgRating, 0) / categoryAverages.length).toFixed(1)
+      : '0.0'
+
+    // Radar chart data - CATEGORY LEVEL
+    const getRadarChartData = () => {
+      return categoryAverages.map(cat => ({
+        category: cat.category.length > 30 ? cat.category.substring(0, 30) + '...' : cat.category,
+        rating: parseFloat(cat.avgRating.toFixed(1)),
+        fullMark: 5
+      }))
+    }
+
+    const radarData = getRadarChartData()
+
+    // Peer comparison - CATEGORY LEVEL
+    const getPeerComparison = (): Array<{category: string, rating: number, percentile: number}> => {
+      const comparisons: Array<{category: string, rating: number, percentile: number}> = []
+      
+      // Get top 3 categories
+      const topCategories = [...categoryAverages]
+        .sort((a, b) => b.avgRating - a.avgRating)
         .slice(0, 3)
       
-      topRated.forEach(([skill, data]) => {
-        // Simulate percentile based on rating (in real app, compare to database)
-        const percentile = data.rating >= 4.5 ? 90 : 
-                          data.rating >= 4 ? 75 :
-                          data.rating >= 3.5 ? 60 :
-                          data.rating >= 3 ? 45 : 30
+      topCategories.forEach(cat => {
+        // Simulate percentile based on rating
+        const percentile = cat.avgRating >= 4.5 ? 90 : 
+                          cat.avgRating >= 4 ? 75 :
+                          cat.avgRating >= 3.5 ? 60 :
+                          cat.avgRating >= 3 ? 45 : 30
         
         comparisons.push({
-          skill,
-          rating: data.rating,
+          category: cat.category,
+          rating: parseFloat(cat.avgRating.toFixed(1)),
           percentile
         })
       })
@@ -883,14 +918,12 @@ export default function UXGrowthJourney() {
 
     const peerComparisons = getPeerComparison()
 
-    // Create 2x2 Strengths vs Growth Matrix
+    // 2x2 Matrix - CATEGORY LEVEL
     const getStrengthsGrowthMatrix = () => {
-      const allSkills = Object.entries(formData.skillRatings)
-      
       const matrix = {
-        highStrength: allSkills.filter(([, data]) => data.rating >= 4).map(([name]) => name),
-        developingStrength: allSkills.filter(([, data]) => data.rating >= 3 && data.rating < 4).map(([name]) => name),
-        focusArea: allSkills.filter(([, data]) => data.rating < 3).map(([name]) => name)
+        highStrength: categoryAverages.filter(cat => cat.avgRating >= 4).map(cat => cat.category),
+        developingStrength: categoryAverages.filter(cat => cat.avgRating >= 3 && cat.avgRating < 4).map(cat => cat.category),
+        focusArea: categoryAverages.filter(cat => cat.avgRating < 3).map(cat => cat.category)
       }
       
       return matrix
@@ -1022,46 +1055,54 @@ export default function UXGrowthJourney() {
             </Card>
           </div>
 
-          {/* Top Skills Radar Chart - Single Clean Chart */}
+          {/* Category-Level Radar Chart */}
           <Card className="mb-8">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center flex items-center justify-center gap-2">
               <BarChart2 className="w-6 h-6 text-blue-600" />
-              Your Top Skills Profile
+              Your Skills by Category
             </h3>
-            <ResponsiveContainer width="100%" height={400}>
-              <RadarChart data={topSkills}>
-                <PolarGrid stroke="#e2e8f0" strokeWidth={2} />
-                <PolarAngleAxis 
-                  dataKey="skill" 
-                  tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
-                />
-                <PolarRadiusAxis 
-                  angle={90} 
-                  domain={[0, 5]} 
-                  tick={{ fill: '#64748b', fontSize: 11 }}
-                  tickCount={6}
-                />
-                <Radar
-                  name="Skill Rating"
-                  dataKey="rating"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.5}
-                  strokeWidth={3}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-            <p className="text-center text-sm text-slate-600 mt-4">
-              Showing your top 6 rated skills • Rated on a scale of 1-5
-            </p>
+            {radarData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={450}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="#e2e8f0" strokeWidth={2} />
+                    <PolarAngleAxis 
+                      dataKey="category" 
+                      tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
+                    />
+                    <PolarRadiusAxis 
+                      angle={90} 
+                      domain={[0, 5]} 
+                      tick={{ fill: '#64748b', fontSize: 11 }}
+                      tickCount={6}
+                    />
+                    <Radar
+                      name="Category Average"
+                      dataKey="rating"
+                      stroke="#3b82f6"
+                      fill="#3b82f6"
+                      fillOpacity={0.5}
+                      strokeWidth={3}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '2px solid #3b82f6',
+                        borderRadius: '8px',
+                        padding: '12px'
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+                <p className="text-center text-sm text-slate-600 mt-4">
+                  Showing {radarData.length} skill categories for {formData.currentRole} • Rated on a scale of 1-5
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-500">
+                <p>No skill ratings available</p>
+              </div>
+            )}
           </Card>
 
           {/* Peer Comparison */}
@@ -1074,7 +1115,7 @@ export default function UXGrowthJourney() {
               {peerComparisons.map((comp, index) => (
                 <div key={index} className="bg-white p-4 rounded-lg border-2 border-blue-200">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-slate-800">{comp.skill}</p>
+                    <p className="font-bold text-slate-800">{comp.category}</p>
                     <span className="text-sm font-semibold text-blue-600">Top {100 - comp.percentile}%</span>
                   </div>
                   <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden">
@@ -1084,35 +1125,38 @@ export default function UXGrowthJourney() {
                     />
                   </div>
                   <p className="text-xs text-slate-600 mt-1">
-                    Rating: {comp.rating}/5 • You're in the {comp.percentile}th percentile
+                    Category Avg: {comp.rating}/5 • You're in the {comp.percentile}th percentile for {formData.currentRole}
                   </p>
                 </div>
               ))}
             </div>
           </Card>
 
-          {/* 2x2 Strengths vs Growth Matrix */}
+          {/* 2x2 Strengths vs Growth Matrix - CATEGORY LEVEL */}
           <Card className="mb-8">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <Target className="w-6 h-6 text-purple-600" />
-              Strengths vs Growth Matrix
+              Category Performance Matrix
             </h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Based on average ratings across all questions in each category for {formData.currentRole}
+            </p>
             <div className="grid grid-cols-2 gap-4">
               {/* High Strength (Top Right) */}
               <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-lg border-2 border-green-300">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">🌟</span>
-                  <h4 className="font-bold text-green-800">Your Strengths</h4>
+                  <h4 className="font-bold text-green-800">Strong Categories</h4>
                 </div>
-                <p className="text-xs text-green-700 mb-3">Rating ≥ 4.0 • Leverage these!</p>
+                <p className="text-xs text-green-700 mb-3">Avg ≥ 4.0 • Leverage these!</p>
                 <div className="space-y-2">
-                  {matrix.highStrength.slice(0, 4).map((skill, i) => (
+                  {matrix.highStrength.map((category, i) => (
                     <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-green-200">
-                      {skill}
+                      {category}
                     </div>
                   ))}
                   {matrix.highStrength.length === 0 && (
-                    <p className="text-sm text-green-600 italic">Keep developing skills!</p>
+                    <p className="text-sm text-green-600 italic">Keep developing!</p>
                   )}
                 </div>
               </div>
@@ -1121,13 +1165,13 @@ export default function UXGrowthJourney() {
               <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-lg border-2 border-yellow-300">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">📈</span>
-                  <h4 className="font-bold text-yellow-800">Developing</h4>
+                  <h4 className="font-bold text-yellow-800">Developing Categories</h4>
                 </div>
-                <p className="text-xs text-yellow-700 mb-3">Rating 3.0-3.9 • Almost there!</p>
+                <p className="text-xs text-yellow-700 mb-3">Avg 3.0-3.9 • Almost there!</p>
                 <div className="space-y-2">
-                  {matrix.developingStrength.slice(0, 4).map((skill, i) => (
+                  {matrix.developingStrength.map((category, i) => (
                     <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-yellow-200">
-                      {skill}
+                      {category}
                     </div>
                   ))}
                   {matrix.developingStrength.length === 0 && (
@@ -1140,13 +1184,13 @@ export default function UXGrowthJourney() {
               <div className="col-span-2 bg-gradient-to-br from-orange-50 to-red-100 p-6 rounded-lg border-2 border-orange-300">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">🎯</span>
-                  <h4 className="font-bold text-orange-800">Priority Focus Areas</h4>
+                  <h4 className="font-bold text-orange-800">Priority Focus Categories</h4>
                 </div>
-                <p className="text-xs text-orange-700 mb-3">Rating &lt; 3.0 • Invest time here for maximum growth</p>
+                <p className="text-xs text-orange-700 mb-3">Avg &lt; 3.0 • Invest time here for maximum growth</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {matrix.focusArea.slice(0, 4).map((skill, i) => (
+                  {matrix.focusArea.map((category, i) => (
                     <div key={i} className="text-sm bg-white px-3 py-2 rounded border border-orange-200">
-                      {skill}
+                      {category}
                     </div>
                   ))}
                   {matrix.focusArea.length === 0 && (
