@@ -6,6 +6,8 @@ import Badge from './Badge'
 import { roleBasedQuestions } from '../data/roleQuestions'
 import { calculateXP, getSkillName, getCareerLevel, getNextCareerLevel, CAREER_LEVELS } from '../utils/scoreCalculations'
 import { supabase } from '../lib/supabase'
+import ResultsDashboard from './results/ResultsDashboard'
+import { generateInsights } from '../utils/insightGenerator'
 
 interface FormData {
   // Step 1: Career Aspirations
@@ -824,6 +826,12 @@ export default function UXGrowthJourney() {
 
   // Results Page - Check this FIRST before any step checks
   if (showResults) {
+    const insights = generateInsights(formData)
+    return <ResultsDashboard formData={formData} insights={insights} />
+  }
+
+  // Old results page (keeping as fallback)
+  if (false) {
     const totalXP = currentXP
     const currentLevel = getCareerLevel(totalXP)
     const nextLevel = getNextCareerLevel(totalXP)
