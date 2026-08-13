@@ -918,6 +918,95 @@ export default function UXGrowthJourney() {
 
     const peerComparisons = getPeerComparison()
 
+    // Get benchmark comparison data (actual vs ideal)
+    const getBenchmarkComparison = () => {
+      const benchmarks: Array<{
+        category: string
+        actual: number
+        ideal: number
+        gap: number
+        status: 'exceeds' | 'meets' | 'developing' | 'needs-focus'
+      }> = []
+      
+      roleConfig.skillCategories.forEach(cat => {
+        if (cat.isScored === false) return
+        
+        let totalActual = 0
+        let totalIdeal = 0
+        let count = 0
+        
+        cat.skills.forEach(skill => {
+          if (typeof skill === 'object' && 'name' in skill) {
+            const skillName = skill.name
+            const rating = formData.skillRatings[skillName]
+            
+            if (rating && rating.rating) {
+              totalActual += rating.rating
+              totalIdeal += skill.idealRating
+              count++
+            }
+          }
+        })
+        
+        if (count > 0) {
+          const avgActual = totalActual / count
+          const avgIdeal = totalIdeal / count
+          const gap = avgActual - avgIdeal
+          
+          let status: 'exceeds' | 'meets' | 'developing' | 'needs-focus'
+          if (gap >= 0.5) status = 'exceeds'
+          else if (gap >= -0.3) status = 'meets'
+          else if (gap >= -0.8) status = 'developing'
+          else status = 'needs-focus'
+          
+          benchmarks.push({
+            category: cat.category,
+            actual: parseFloat(avgActual.toFixed(1)),
+            ideal: parseFloat(avgIdeal.toFixed(1)),
+            gap: parseFloat(gap.toFixed(1)),
+            status
+          })
+        }
+      })
+      
+      return benchmarks
+    }
+
+    const benchmarks = getBenchmarkComparison()
+
+    // Generate insights for peer comparison
+    const getPeerInsights = (comp: {category: string, rating: number, percentile: number}) => {
+      if (comp.percentile >= 75) {
+        return {
+          icon: '🏆',
+          message: 'Outstanding performance! You\'re a role model in this area.',
+          action: 'Consider mentoring others or leading initiatives here.',
+          color: 'text-green-700'
+        }
+      } else if (comp.percentile >= 60) {
+        return {
+          icon: '⭐',
+          message: 'Strong performance! You\'re ahead of most peers.',
+          action: 'Keep building on this strength and share your knowledge.',
+          color: 'text-blue-700'
+        }
+      } else if (comp.percentile >= 45) {
+        return {
+          icon: '📈',
+          message: 'Solid foundation with room to grow.',
+          action: 'Focus on consistent practice to reach the next level.',
+          color: 'text-yellow-700'
+        }
+      } else {
+        return {
+          icon: '🎯',
+          message: 'Great opportunity for growth!',
+          action: 'Prioritize learning and seek mentorship in this area.',
+          color: 'text-orange-700'
+        }
+      }
+    }
+
     // 2x2 Matrix - CATEGORY LEVEL
     const getStrengthsGrowthMatrix = () => {
       const matrix = {
@@ -1105,30 +1194,151 @@ export default function UXGrowthJourney() {
             )}
           </Card>
 
-          {/* Peer Comparison */}
-          <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+          {/* Benchmark vs Actual Performance */}
+          <Card className="mb-8">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <TrendingUp className="w-6 h-6 text-purple-600" />
+              Your Performance vs Role Benchmark
+            </h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Compare your ratings against the expected benchmark for {formData.currentRole}
+            </p>
+            <div className="space-y-4">
+              {benchmarks.map((bench, index) => {
+                const statusColors = {
+                  'exceeds': 'bg-green-500',
+                  'meets': 'bg-blue-500',
+                  'developing': 'bg-yellow-500',
+                  'needs-focus': 'bg-orange-500'
+                }
+                const statusLabels = {
+                  'exceeds': 'Exceeds Benchmark',
+                  'meets': 'Meets Benchmark',
+                  'developing': 'Developing',
+                  'needs-focus': 'Needs Focus'
+                }
+                const statusIcons = {
+                  'exceeds': '🌟',
+                  'meets': '✅',
+                  'developing': '📈',
+                  'needs-focus': '🎯'
+                }
+                
+                return (
+                  <div key={index} className="bg-white p-5 rounded-lg border-2 border-slate-200 hover:border-purple-300 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex-1">
+                        <p className="font-bold text-slate-800 text-sm mb-1">{bench.category}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{statusIcons[bench.status]}</span>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[bench.status]} text-white`}>
+                            {statusLabels[bench.status]}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-slate-800">{bench.actual}</p>
+                        <p className="text-xs text-slate-500">vs {bench.ideal} target</p>
+                      </div>
+                    </div>
+                    
+                    {/* Visual bar comparison */}
+                    <div className="relative h-8 bg-slate-100 rounded-lg overflow-hidden mb-2">
+                      {/* Benchmark line */}
+                      <div 
+                        className="absolute top-0 bottom-0 w-1 bg-red-400 z-10"
+                        style={{ left: `${(bench.ideal / 5) * 100}%` }}
+                      >
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-red-600 font-semibold whitespace-nowrap">
+                          Target
+                        </div>
+                      </div>
+                      {/* Actual performance bar */}
+                      <div 
+                        className={`h-full ${statusColors[bench.status]} transition-all flex items-center justify-end pr-2`}
+                        style={{ width: `${(bench.actual / 5) * 100}%` }}
+                      >
+                        <span className="text-xs font-bold text-white">You</span>
+                      </div>
+                    </div>
+                    
+                    {/* Gap analysis */}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">
+                        {bench.gap >= 0 ? (
+                          <span className="text-green-600 font-semibold">+{bench.gap} above target 🎉</span>
+                        ) : (
+                          <span className="text-orange-600 font-semibold">{Math.abs(bench.gap)} gap to close</span>
+                        )}
+                      </span>
+                      <span className="text-slate-500">
+                        {((bench.actual / bench.ideal) * 100).toFixed(0)}% of target
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+
+          {/* Enhanced Peer Comparison with Insights */}
+          <Card className="mb-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-600" />
-              How You Compare to Peers
+              How You Stack Up Against Peers
             </h3>
-            <div className="space-y-4">
-              {peerComparisons.map((comp, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg border-2 border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-slate-800">{comp.category}</p>
-                    <span className="text-sm font-semibold text-blue-600">Top {100 - comp.percentile}%</span>
+            <p className="text-sm text-slate-600 mb-6">
+              See where you stand compared to other {formData.currentRole}s in your top-performing categories
+            </p>
+            <div className="space-y-6">
+              {peerComparisons.map((comp, index) => {
+                const insight = getPeerInsights(comp)
+                return (
+                  <div key={index} className="bg-white p-6 rounded-xl border-2 border-blue-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-3xl">{insight.icon}</span>
+                          <div>
+                            <p className="font-bold text-slate-800 text-lg">{comp.category}</p>
+                            <p className="text-sm text-slate-600">Your Rating: {comp.rating}/5</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg">
+                          <p className="text-xs font-semibold">PERCENTILE</p>
+                          <p className="text-2xl font-bold">{comp.percentile}th</p>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">Top {100 - comp.percentile}%</p>
+                      </div>
+                    </div>
+                    
+                    {/* Percentile visualization */}
+                    <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden mb-4">
+                      <div 
+                        className="absolute h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-full transition-all"
+                        style={{ width: `${comp.percentile}%` }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-white drop-shadow-lg">
+                          {comp.percentile}% of peers below you
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Insight box */}
+                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                      <p className={`font-semibold text-sm mb-1 ${insight.color}`}>
+                        💡 {insight.message}
+                      </p>
+                      <p className="text-xs text-slate-700">
+                        <strong>Next Step:</strong> {insight.action}
+                      </p>
+                    </div>
                   </div>
-                  <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all"
-                      style={{ width: `${comp.percentile}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Category Avg: {comp.rating}/5 • You're in the {comp.percentile}th percentile for {formData.currentRole}
-                  </p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Card>
 
