@@ -27,29 +27,21 @@ export default function ResultsDashboard({ formData, insights }: ResultsDashboar
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-growth-50 via-white to-blue-50">
-      {/* Hero Section - Always Visible */}
-      <div className="bg-gradient-to-r from-growth-600 to-blue-600 text-white py-12 px-4">
+      {/* Hero Section - Clean & Professional */}
+      <div className="bg-white border-b border-slate-200 py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">
-            ✨ Your UX Growth Story, {formData.name}
-          </h1>
-          <p className="text-lg md:text-xl text-white/90 mb-6">
-            {insights.roleMessage}
-          </p>
-          
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{insights.avgRating}/5</div>
-              <div className="text-sm text-white/80">Avg Skill Rating</div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-1">
+                {formData.name}
+              </h1>
+              <p className="text-slate-600">
+                {formData.currentRole} • Assessed {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{insights.topStrengths.length}</div>
-              <div className="text-sm text-white/80">Top Strengths</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{insights.growthOpportunities.length}</div>
-              <div className="text-sm text-white/80">Focus Areas</div>
+            <div className="text-right">
+              <div className="text-4xl font-bold text-growth-600">{insights.avgRating}</div>
+              <div className="text-sm text-slate-500">Overall Rating</div>
             </div>
           </div>
         </div>
