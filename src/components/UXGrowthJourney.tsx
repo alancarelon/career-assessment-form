@@ -1399,229 +1399,136 @@ export default function UXGrowthJourney() {
             </div>
           </Card>
 
-          {/* Your UX Journey Story - Magazine Style Narrative */}
-          <div className="mb-8">
+          {/* Your UX Journey Story - Narrative Summary */}
+          <Card className="mb-8 bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
             <button 
               onClick={() => setShowStory(!showStory)}
-              className="w-full group"
+              className="w-full flex items-center justify-between p-6 text-left hover:bg-white/50 rounded-lg transition-all"
             >
-              <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 p-1 rounded-2xl hover:shadow-2xl transition-all duration-300">
-                <div className="bg-white rounded-xl p-8 group-hover:bg-gradient-to-br group-hover:from-white group-hover:to-purple-50 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-3xl shadow-lg">
-                        📖
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                          {formData.name}'s Story
-                        </h3>
-                        <p className="text-slate-600 mt-1">Click to read your personalized UX journey</p>
-                      </div>
-                    </div>
-                    <div className="text-4xl text-purple-600 group-hover:scale-110 transition-transform">
-                      {showStory ? '📘' : '📕'}
-                    </div>
-                  </div>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">📖</span>
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-800">Your UX Journey Story</h3>
+                  <p className="text-sm text-slate-600">A personalized narrative of your growth path</p>
                 </div>
               </div>
+              <span className="text-2xl text-purple-600">{showStory ? '▼' : '▶'}</span>
             </button>
             
             {showStory && (
-              <div className="mt-6 space-y-8 animate-in slide-in-from-top-4 duration-500">
+              <div className="px-6 pb-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
+                <div className="h-px bg-gradient-to-r from-transparent via-purple-300 to-transparent mb-6"></div>
                 
-                {/* Hero Section */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 p-1">
-                  <div className="bg-white rounded-xl p-12">
-                    <div className="max-w-4xl mx-auto text-center">
-                      <div className="inline-block mb-6">
-                        <div className="text-7xl mb-4">{currentLevelDisplay.icon}</div>
-                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-2 rounded-full">
-                          <p className="text-sm font-semibold text-purple-800">{currentLevel.level}</p>
-                        </div>
-                      </div>
-                      <h2 className="text-4xl font-bold text-slate-900 mb-4">
-                        Meet {formData.name}
-                      </h2>
-                      <p className="text-xl text-slate-600 leading-relaxed">
-                        A passionate <span className="font-semibold text-purple-600">{formData.currentRole}</span> on a mission to{' '}
-                        <span className="font-semibold text-pink-600">{formData.careerGrowth.toLowerCase()}</span>
-                      </p>
-                      <div className="mt-8 flex items-center justify-center gap-8">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-purple-600">{avgRating}</div>
-                          <div className="text-sm text-slate-600">Overall Rating</div>
-                        </div>
-                        <div className="w-px h-12 bg-slate-300"></div>
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-pink-600">{formData.strengths.length}</div>
-                          <div className="text-sm text-slate-600">Superpowers</div>
-                        </div>
-                        <div className="w-px h-12 bg-slate-300"></div>
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-orange-600">{formData.skillsToImprove.length}</div>
-                          <div className="text-sm text-slate-600">Growth Areas</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {/* Introduction */}
+                <div className="bg-white p-6 rounded-lg border-l-4 border-purple-500">
+                  <h4 className="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2">
+                    <span>🌟</span> Your Journey Begins
+                  </h4>
+                  <p className="text-slate-700 leading-relaxed">
+                    {formData.name}, as a <strong>{formData.currentRole}</strong>, you've embarked on an exciting UX journey. 
+                    Your assessment reveals a current overall rating of <strong>{avgRating}/5.0</strong>, placing you at the 
+                    <strong> {currentLevel.level}</strong> level. This is a testament to your dedication and the skills you've 
+                    cultivated so far.
+                  </p>
                 </div>
 
-                {/* What Makes Them Shine */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-2xl">
-                        ✨
-                      </div>
-                      <h3 className="text-2xl font-bold text-green-900">What Makes {formData.name.split(' ')[0]} Shine</h3>
-                    </div>
-                    <div className="space-y-4">
-                      {formData.strengths.map((strength, idx) => (
-                        <div key={idx} className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-green-900 text-lg">{strength}</p>
-                            {idx === 0 && (
-                              <p className="text-sm text-green-700 mt-1 italic">
-                                Their signature strength - the one everyone notices!
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {formData.teammatesFeedback && (
-                      <div className="mt-6 p-4 bg-white rounded-lg border-l-4 border-green-500">
-                        <p className="text-sm font-semibold text-green-800 mb-1">What teammates say:</p>
-                        <p className="text-slate-700 italic">"{formData.teammatesFeedback}"</p>
-                      </div>
+                {/* Strengths Narrative */}
+                <div className="bg-white p-6 rounded-lg border-l-4 border-green-500">
+                  <h4 className="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
+                    <span>💪</span> Your Superpowers
+                  </h4>
+                  <p className="text-slate-700 leading-relaxed mb-3">
+                    What truly sets you apart is your mastery in <strong>{formData.strengths[0]}</strong>. 
+                    {formData.strengths.length > 1 && (
+                      <span> Combined with your strengths in <strong>{formData.strengths.slice(1).join(', ')}</strong>, 
+                      you have a powerful toolkit that makes you invaluable to any team.</span>
                     )}
-                  </div>
-
-                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-8 border-2 border-orange-200">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl">
-                        🎯
-                      </div>
-                      <h3 className="text-2xl font-bold text-orange-900">Where They're Growing</h3>
-                    </div>
-                    <div className="space-y-4">
-                      {formData.skillsToImprove.map((skill, idx) => (
-                        <div key={idx} className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0">
-                            🌱
-                          </div>
-                          <div>
-                            <p className="font-semibold text-orange-900 text-lg">{skill}</p>
-                            {idx === 0 && formData.learningStyle.length > 0 && (
-                              <p className="text-sm text-orange-700 mt-1">
-                                Learning through: <span className="font-semibold">{formData.learningStyle[0]}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-6 p-4 bg-white rounded-lg">
-                      <p className="text-sm text-slate-700">
-                        <span className="font-semibold text-orange-800">Growth mindset:</span> Every expert was once a beginner. 
-                        {formData.name.split(' ')[0]} knows that investing in these areas will unlock the next level.
-                      </p>
-                    </div>
-                  </div>
+                  </p>
+                  <p className="text-sm text-green-700 italic">
+                    💡 Your teammates recognize you for: {formData.teammatesFeedback || 'your collaborative spirit and expertise'}
+                  </p>
                 </div>
 
-                {/* Recent Win */}
-                {formData.proudAccomplishment && (
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border-2 border-blue-200">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-2xl">
-                        🏆
-                      </div>
-                      <h3 className="text-2xl font-bold text-blue-900">A Recent Win Worth Celebrating</h3>
+                {/* Growth Opportunities */}
+                <div className="bg-white p-6 rounded-lg border-l-4 border-orange-500">
+                  <h4 className="text-lg font-bold text-orange-800 mb-3 flex items-center gap-2">
+                    <span>🎯</span> Your Growth Frontier
+                  </h4>
+                  <p className="text-slate-700 leading-relaxed">
+                    Every expert was once a beginner. You've identified <strong>{formData.skillsToImprove[0]}</strong> as 
+                    your primary area for development. {formData.learningStyle.length > 0 && (
+                      <span>Your preferred learning approach through <strong>{formData.learningStyle[0]}</strong> will 
+                      be your guide in this journey.</span>
+                    )} This self-awareness is the first step toward mastery.
+                  </p>
+                </div>
+
+                {/* Vision & Goals */}
+                <div className="bg-white p-6 rounded-lg border-l-4 border-blue-500">
+                  <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+                    <span>🚀</span> Your Vision Forward
+                  </h4>
+                  <p className="text-slate-700 leading-relaxed mb-3">
+                    Looking ahead, your aspiration to <strong>{formData.careerGrowth}</strong> shows clear direction. 
+                    In the next 6 months, you're focused on: <strong>{formData.sixMonthGoal || 'achieving your next milestone'}</strong>.
+                  </p>
+                  {formData.proudAccomplishment && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-semibold text-blue-800 mb-1">Recent Win:</p>
+                      <p className="text-sm text-slate-700 italic">"{formData.proudAccomplishment}"</p>
                     </div>
-                    <div className="bg-white rounded-xl p-6 border-l-4 border-blue-500">
-                      <p className="text-lg text-slate-800 leading-relaxed italic">
-                        "{formData.proudAccomplishment}"
-                      </p>
-                      <p className="text-sm text-blue-700 mt-4">
-                        This accomplishment shows {formData.name.split(' ')[0]}'s ability to deliver real impact.
-                      </p>
-                    </div>
+                  )}
+                </div>
+
+                {/* Community & Impact */}
+                {(formData.teachingTopic || formData.mentorInterest) && (
+                  <div className="bg-white p-6 rounded-lg border-l-4 border-indigo-500">
+                    <h4 className="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                      <span>🤝</span> Your Community Impact
+                    </h4>
+                    <p className="text-slate-700 leading-relaxed">
+                      Beyond personal growth, you're committed to lifting others. 
+                      {formData.teachingTopic && (
+                        <span> Your expertise in <strong>{formData.teachingTopic}</strong> could inspire countless designers.</span>
+                      )}
+                      {formData.mentorInterest && (
+                        <span> Your interest in <strong>{formData.mentorInterest}</strong> shows your dedication to community building.</span>
+                      )}
+                    </p>
                   </div>
                 )}
 
-                {/* The Vision */}
-                <div className="bg-gradient-to-br from-purple-900 to-pink-900 rounded-2xl p-1">
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-10">
-                    <div className="text-center mb-8">
-                      <div className="text-5xl mb-4">🚀</div>
-                      <h3 className="text-3xl font-bold text-purple-900 mb-2">The Vision</h3>
-                      <p className="text-lg text-slate-700">Where {formData.name.split(' ')[0]} is headed</p>
+                {/* The Road Ahead */}
+                <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-lg">
+                  <h4 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
+                    <span>✨</span> The Road Ahead
+                  </h4>
+                  <p className="text-slate-800 leading-relaxed mb-4">
+                    Your journey is uniquely yours, {formData.name}. With your current rating of <strong>{avgRating}/5.0</strong>, 
+                    you're {parseFloat(avgRating) >= 4 ? 'already excelling' : 'building a strong foundation'}. 
+                    The gap between where you are and where you want to be isn't a barrier—it's your roadmap.
+                  </p>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="bg-white p-4 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-purple-600">{benchmarks.filter(b => b.status === 'exceeds' || b.status === 'meets').length}</p>
+                      <p className="text-xs text-slate-600 mt-1">Categories On Track</p>
                     </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                      <div className="bg-white rounded-xl p-6">
-                        <div className="text-3xl mb-3">📅</div>
-                        <p className="text-sm font-semibold text-purple-800 mb-2">Next 6 Months</p>
-                        <p className="text-lg font-bold text-slate-900">{formData.sixMonthGoal || 'Building momentum'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-6">
-                        <div className="text-3xl mb-3">🌟</div>
-                        <p className="text-sm font-semibold text-pink-800 mb-2">Long-term Aspiration</p>
-                        <p className="text-lg font-bold text-slate-900">{formData.careerGrowth}</p>
-                      </div>
+                    <div className="bg-white p-4 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-blue-600">{formData.strengths.length}</p>
+                      <p className="text-xs text-slate-600 mt-1">Core Strengths</p>
                     </div>
-
-                    {(formData.teachingTopic || formData.mentorInterest) && (
-                      <div className="mt-8 bg-white rounded-xl p-6 max-w-4xl mx-auto">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="text-3xl">🤝</div>
-                          <h4 className="text-xl font-bold text-indigo-900">Giving Back</h4>
-                        </div>
-                        <p className="text-slate-700 leading-relaxed">
-                          Beyond personal growth, {formData.name.split(' ')[0]} believes in lifting others up.
-                          {formData.teachingTopic && (
-                            <span className="block mt-2">
-                              <span className="font-semibold text-indigo-800">Ready to teach:</span> {formData.teachingTopic}
-                            </span>
-                          )}
-                          {formData.mentorInterest && (
-                            <span className="block mt-2">
-                              <span className="font-semibold text-indigo-800">Mentorship focus:</span> {formData.mentorInterest}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Closing Note */}
-                <div className="text-center py-12">
-                  <div className="max-w-3xl mx-auto">
-                    <div className="text-6xl mb-6">✨</div>
-                    <h3 className="text-3xl font-bold text-slate-900 mb-4">
-                      This is just the beginning
-                    </h3>
-                    <p className="text-xl text-slate-600 leading-relaxed mb-8">
-                      {formData.name}'s journey is uniquely theirs. With {benchmarks.filter(b => b.status === 'exceeds' || b.status === 'meets').length} categories 
-                      already on track and a clear vision ahead, the path forward is bright.
-                    </p>
-                    <div className="inline-block bg-gradient-to-r from-purple-100 to-pink-100 px-8 py-4 rounded-full">
-                      <p className="text-lg font-semibold text-purple-900 italic">
-                        "Every master was once a disaster. Keep growing, keep learning, keep designing." 🌱
-                      </p>
+                    <div className="bg-white p-4 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-green-600">{formData.skillsToImprove.length}</p>
+                      <p className="text-xs text-slate-600 mt-1">Growth Opportunities</p>
                     </div>
                   </div>
+                  <p className="text-sm text-slate-700 mt-4 italic text-center">
+                    "Every master was once a disaster. Keep growing, keep learning, keep designing." 🌱
+                  </p>
                 </div>
-
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-4 mt-8">
