@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ArrowRight, ArrowLeft, Sparkles, Target, Users, TrendingUp, Award, Zap, Download, BarChart2 } from 'lucide-react'
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts'
+import { ArrowRight, ArrowLeft, Sparkles, Target, Users, TrendingUp, Award, Zap, Download } from 'lucide-react'
 import Button from './Button'
 import Card from './Card'
 import Badge from './Badge'
@@ -879,17 +878,6 @@ export default function UXGrowthJourney() {
       ? (categoryAverages.reduce((sum, cat) => sum + cat.avgRating, 0) / categoryAverages.length).toFixed(1)
       : '0.0'
 
-    // Radar chart data - CATEGORY LEVEL
-    const getRadarChartData = () => {
-      return categoryAverages.map(cat => ({
-        category: cat.category.length > 30 ? cat.category.substring(0, 30) + '...' : cat.category,
-        rating: parseFloat(cat.avgRating.toFixed(1)),
-        fullMark: 5
-      }))
-    }
-
-    const radarData = getRadarChartData()
-
     // Peer comparison - CATEGORY LEVEL
     const getPeerComparison = (): Array<{category: string, rating: number, percentile: number}> => {
       const comparisons: Array<{category: string, rating: number, percentile: number}> = []
@@ -1144,135 +1132,76 @@ export default function UXGrowthJourney() {
             </Card>
           </div>
 
-          {/* Category-Level Radar Chart */}
+          {/* Compact Performance Overview with Benchmarks */}
           <Card className="mb-8">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center flex items-center justify-center gap-2">
-              <BarChart2 className="w-6 h-6 text-blue-600" />
-              Your Skills by Category
-            </h3>
-            {radarData.length > 0 ? (
-              <>
-                <ResponsiveContainer width="100%" height={450}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="#e2e8f0" strokeWidth={2} />
-                    <PolarAngleAxis 
-                      dataKey="category" 
-                      tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 5]} 
-                      tick={{ fill: '#64748b', fontSize: 11 }}
-                      tickCount={6}
-                    />
-                    <Radar
-                      name="Category Average"
-                      dataKey="rating"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.5}
-                      strokeWidth={3}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '2px solid #3b82f6',
-                        borderRadius: '8px',
-                        padding: '12px'
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-                <p className="text-center text-sm text-slate-600 mt-4">
-                  Showing {radarData.length} skill categories for {formData.currentRole} • Rated on a scale of 1-5
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                  Performance vs Benchmark
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  Your ratings compared to {formData.currentRole} expectations
                 </p>
-              </>
-            ) : (
-              <div className="text-center py-12 text-slate-500">
-                <p>No skill ratings available</p>
               </div>
-            )}
-          </Card>
-
-          {/* Benchmark vs Actual Performance */}
-          <Card className="mb-8">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
-              Your Performance vs Role Benchmark
-            </h3>
-            <p className="text-sm text-slate-600 mb-6">
-              Compare your ratings against the expected benchmark for {formData.currentRole}
-            </p>
-            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span>You</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-slate-300 rounded"></div>
+                  <span>Target</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
               {benchmarks.map((bench, index) => {
-                const statusColors = {
-                  'exceeds': 'bg-green-500',
-                  'meets': 'bg-blue-500',
-                  'developing': 'bg-yellow-500',
-                  'needs-focus': 'bg-orange-500'
-                }
-                const statusLabels = {
-                  'exceeds': 'Exceeds Benchmark',
-                  'meets': 'Meets Benchmark',
-                  'developing': 'Developing',
-                  'needs-focus': 'Needs Focus'
-                }
                 const statusIcons = {
                   'exceeds': '🌟',
                   'meets': '✅',
                   'developing': '📈',
                   'needs-focus': '🎯'
                 }
+                const barColor = bench.gap >= 0.5 ? 'bg-green-500' : 
+                                bench.gap >= -0.3 ? 'bg-blue-500' : 
+                                bench.gap >= -0.8 ? 'bg-yellow-500' : 'bg-orange-500'
                 
                 return (
-                  <div key={index} className="bg-white p-5 rounded-lg border-2 border-slate-200 hover:border-purple-300 transition-all">
-                    <div className="flex items-center justify-between mb-3">
+                  <div key={index} className="group hover:bg-slate-50 p-3 rounded-lg transition-all">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-lg">{statusIcons[bench.status]}</span>
                       <div className="flex-1">
-                        <p className="font-bold text-slate-800 text-sm mb-1">{bench.category}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{statusIcons[bench.status]}</span>
-                          <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[bench.status]} text-white`}>
-                            {statusLabels[bench.status]}
-                          </span>
-                        </div>
+                        <p className="font-semibold text-slate-800 text-sm">{bench.category}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-800">{bench.actual}</p>
-                        <p className="text-xs text-slate-500">vs {bench.ideal} target</p>
-                      </div>
-                    </div>
-                    
-                    {/* Visual bar comparison */}
-                    <div className="relative h-8 bg-slate-100 rounded-lg overflow-hidden mb-2">
-                      {/* Benchmark line */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-1 bg-red-400 z-10"
-                        style={{ left: `${(bench.ideal / 5) * 100}%` }}
-                      >
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-red-600 font-semibold whitespace-nowrap">
-                          Target
-                        </div>
-                      </div>
-                      {/* Actual performance bar */}
-                      <div 
-                        className={`h-full ${statusColors[bench.status]} transition-all flex items-center justify-end pr-2`}
-                        style={{ width: `${(bench.actual / 5) * 100}%` }}
-                      >
-                        <span className="text-xs font-bold text-white">You</span>
-                      </div>
-                    </div>
-                    
-                    {/* Gap analysis */}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-slate-800">{bench.actual}</span>
+                        <span className="text-xs text-slate-500">/ {bench.ideal}</span>
                         {bench.gap >= 0 ? (
-                          <span className="text-green-600 font-semibold">+{bench.gap} above target 🎉</span>
+                          <span className="text-xs text-green-600 font-semibold">+{bench.gap}</span>
                         ) : (
-                          <span className="text-orange-600 font-semibold">{Math.abs(bench.gap)} gap to close</span>
+                          <span className="text-xs text-orange-600 font-semibold">{bench.gap}</span>
                         )}
-                      </span>
-                      <span className="text-slate-500">
-                        {((bench.actual / bench.ideal) * 100).toFixed(0)}% of target
+                      </div>
+                    </div>
+                    
+                    {/* Dual bar chart */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 relative h-6 bg-slate-100 rounded-full overflow-hidden">
+                        {/* Target bar (background) */}
+                        <div 
+                          className="absolute h-full bg-slate-300 rounded-full"
+                          style={{ width: `${(bench.ideal / 5) * 100}%` }}
+                        />
+                        {/* Actual bar (foreground) */}
+                        <div 
+                          className={`absolute h-full ${barColor} rounded-full transition-all`}
+                          style={{ width: `${(bench.actual / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-slate-500 w-12 text-right">
+                        {((bench.actual / bench.ideal) * 100).toFixed(0)}%
                       </span>
                     </div>
                   </div>
@@ -1281,60 +1210,35 @@ export default function UXGrowthJourney() {
             </div>
           </Card>
 
-          {/* Enhanced Peer Comparison with Insights */}
-          <Card className="mb-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          {/* Compact Peer Comparison */}
+          <Card className="mb-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-600" />
-              How You Stack Up Against Peers
+              Peer Comparison
             </h3>
-            <p className="text-sm text-slate-600 mb-6">
-              See where you stand compared to other {formData.currentRole}s in your top-performing categories
+            <p className="text-sm text-slate-600 mb-4">
+              Your top 3 categories vs other {formData.currentRole}s
             </p>
-            <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-4">
               {peerComparisons.map((comp, index) => {
                 const insight = getPeerInsights(comp)
                 return (
-                  <div key={index} className="bg-white p-6 rounded-xl border-2 border-blue-200 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-3xl">{insight.icon}</span>
-                          <div>
-                            <p className="font-bold text-slate-800 text-lg">{comp.category}</p>
-                            <p className="text-sm text-slate-600">Your Rating: {comp.rating}/5</p>
-                          </div>
-                        </div>
+                  <div key={index} className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                    <div className="text-center mb-3">
+                      <span className="text-3xl mb-2 block">{insight.icon}</span>
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-3 py-2 rounded-lg mb-2">
+                        <p className="text-xs font-semibold">PERCENTILE</p>
+                        <p className="text-2xl font-bold">{comp.percentile}th</p>
                       </div>
-                      <div className="text-right">
-                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg">
-                          <p className="text-xs font-semibold">PERCENTILE</p>
-                          <p className="text-2xl font-bold">{comp.percentile}th</p>
-                        </div>
-                        <p className="text-xs text-slate-600 mt-1">Top {100 - comp.percentile}%</p>
-                      </div>
+                      <p className="text-xs text-slate-600">Top {100 - comp.percentile}%</p>
                     </div>
                     
-                    {/* Percentile visualization */}
-                    <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden mb-4">
-                      <div 
-                        className="absolute h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-full transition-all"
-                        style={{ width: `${comp.percentile}%` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white drop-shadow-lg">
-                          {comp.percentile}% of peers below you
-                        </span>
-                      </div>
-                    </div>
+                    <p className="font-bold text-slate-800 text-sm mb-1 text-center">{comp.category}</p>
+                    <p className="text-xs text-slate-600 text-center mb-3">Rating: {comp.rating}/5</p>
                     
-                    {/* Insight box */}
-                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                      <p className={`font-semibold text-sm mb-1 ${insight.color}`}>
-                        💡 {insight.message}
-                      </p>
-                      <p className="text-xs text-slate-700">
-                        <strong>Next Step:</strong> {insight.action}
-                      </p>
+                    <div className="bg-slate-50 p-2 rounded text-xs">
+                      <p className={`font-semibold mb-1 ${insight.color}`}>{insight.message}</p>
+                      <p className="text-slate-600">{insight.action}</p>
                     </div>
                   </div>
                 )
