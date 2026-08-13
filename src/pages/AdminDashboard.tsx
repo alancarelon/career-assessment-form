@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart, Eye } from 'lucide-react'
+import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart, Eye, Filter, X } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -12,6 +12,12 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    roles: [] as string[],
+    performance: 'all' as 'all' | 'high' | 'ontrack' | 'needs',
+    dateRange: 'all' as 'all' | 'week' | 'month' | 'quarter'
+  })
 
   const fetchSubmissions = async () => {
     setLoading(true)
@@ -30,6 +36,72 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Calculate average rating for a submission
+  const calculateAvgRating = (skillRatings: any) => {
+    if (!skillRatings || Object.keys(skillRatings).length === 0) return 0
+    const ratings = Object.values(skillRatings)
+    const sum = ratings.reduce((acc: number, val: any) => {
+      const rating = typeof val === 'object' ? val.rating : Number(val)
+      return acc + rating
+    }, 0)
+    return sum / ratings.length
+  }
+
+  // Filter submissions based on active filters
+  const filteredSubmissions = submissions.filter(sub => {
+    // Role filter
+    if (filters.roles.length > 0 && !filters.roles.includes(sub.current_role)) {
+      return false
+    }
+
+    // Performance filter
+    if (filters.performance !== 'all') {
+      const avg = calculateAvgRating(sub.skill_ratings)
+      if (filters.performance === 'high' && avg < 4.0) return false
+      if (filters.performance === 'ontrack' && (avg < 3.0 || avg >= 4.0)) return false
+      if (filters.performance === 'needs' && avg >= 3.0) return false
+    }
+
+    // Date range filter
+    if (filters.dateRange !== 'all' && sub.created_at) {
+      const submissionDate = new Date(sub.created_at)
+      const now = new Date()
+      const daysDiff = Math.floor((now.getTime() - submissionDate.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (filters.dateRange === 'week' && daysDiff > 7) return false
+      if (filters.dateRange === 'month' && daysDiff > 30) return false
+      if (filters.dateRange === 'quarter' && daysDiff > 90) return false
+    }
+
+    return true
+  })
+
+  // Get unique roles from submissions
+  const availableRoles = Array.from(new Set(submissions.map(s => s.current_role))).sort()
+
+  // Count active filters
+  const activeFilterCount = 
+    filters.roles.length + 
+    (filters.performance !== 'all' ? 1 : 0) + 
+    (filters.dateRange !== 'all' ? 1 : 0)
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setFilters({
+      roles: [],
+      performance: 'all',
+      dateRange: 'all'
+    })
+  }
+
+  // Remove individual filter
+  const removeRoleFilter = (role: string) => {
+    setFilters(prev => ({
+      ...prev,
+      roles: prev.roles.filter(r => r !== role)
+    }))
   }
 
   useEffect(() => {
@@ -230,6 +302,151 @@ export default function AdminDashboard() {
           </Card>
         )}
 
+        {/* Filter Bar */}
+        <Card className="mb-8">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors rounded-lg"
+          >
+            <div className="flex items-center gap-3">
+              <Filter className="w-5 h-5 text-purple-600" />
+              <span className="font-semibold text-slate-800">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
+            </div>
+            <span className="text-slate-400">{showFilters ? '▲' : '▼'}</span>
+          </button>
+
+          {showFilters && (
+            <div className="p-4 pt-0 space-y-4 border-t border-slate-200 mt-4">
+              {/* Role Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableRoles.map(role => (
+                    <button
+                      key={role}
+                      onClick={() => {
+                        setFilters(prev => ({
+                          ...prev,
+                          roles: prev.roles.includes(role)
+                            ? prev.roles.filter(r => r !== role)
+                            : [...prev.roles, role]
+                        }))
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        filters.roles.includes(role)
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Performance Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Performance</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'high', label: 'High Performers (≥4.0)' },
+                    { value: 'ontrack', label: 'On Track (3.0-3.9)' },
+                    { value: 'needs', label: 'Needs Support (<3.0)' }
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setFilters(prev => ({ ...prev, performance: option.value as any }))}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        filters.performance === option.value
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Range Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Date Range</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: 'All Time' },
+                    { value: 'week', label: 'Last 7 Days' },
+                    { value: 'month', label: 'Last 30 Days' },
+                    { value: 'quarter', label: 'Last 90 Days' }
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setFilters(prev => ({ ...prev, dateRange: option.value as any }))}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        filters.dateRange === option.value
+                          ? 'bg-green-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              {activeFilterCount > 0 && (
+                <div className="pt-2 border-t border-slate-200">
+                  <Button variant="outline" onClick={clearAllFilters} className="text-sm">
+                    <X className="w-4 h-4 mr-2" />
+                    Clear All Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
+              {filters.roles.map(role => (
+                <span key={role} className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Role: {role}
+                  <button onClick={() => removeRoleFilter(role)} className="hover:bg-purple-200 rounded-full p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {filters.performance !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Performance: {filters.performance === 'high' ? 'High' : filters.performance === 'ontrack' ? 'On Track' : 'Needs Support'}
+                  <button onClick={() => setFilters(prev => ({ ...prev, performance: 'all' }))} className="hover:bg-blue-200 rounded-full p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {filters.dateRange !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Date: {filters.dateRange === 'week' ? 'Last 7 Days' : filters.dateRange === 'month' ? 'Last 30 Days' : 'Last 90 Days'}
+                  <button onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))} className="hover:bg-green-200 rounded-full p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Results Count */}
+          <div className="px-4 pb-4 text-sm text-slate-600">
+            Showing <span className="font-semibold text-slate-900">{filteredSubmissions.length}</span> of <span className="font-semibold text-slate-900">{submissions.length}</span> submissions
+          </div>
+        </Card>
+
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <div className="flex items-center gap-2 mb-2">
@@ -268,7 +485,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Analytics Charts */}
-        {submissions.length > 0 && (
+        {filteredSubmissions.length > 0 && (
           <>
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Role Distribution Pie Chart */}
@@ -356,11 +573,13 @@ export default function AdminDashboard() {
 
         <Card>
           <h2 className="text-2xl font-bold text-slate-800 mb-6">Recent Submissions</h2>
-          {submissions.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">No submissions yet</p>
+          {filteredSubmissions.length === 0 ? (
+            <p className="text-center text-slate-500 py-8">
+              {submissions.length === 0 ? 'No submissions yet' : 'No submissions match the selected filters'}
+            </p>
           ) : (
             <div className="space-y-4">
-              {submissions.map((submission) => (
+              {filteredSubmissions.map((submission) => (
                 <div
                   key={submission.id}
                   className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-growth-300 transition-colors"
