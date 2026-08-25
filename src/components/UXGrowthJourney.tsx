@@ -1885,13 +1885,8 @@ export default function UXGrowthJourney() {
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 flex-1">{skillName}</h4>
                             {formData.skillRatings[skillName]?.rating && (
-                              <div className="flex items-center gap-2">
-                                <Badge variant="growth" className="text-sm">
-                                  {ratingLabels[formData.skillRatings[skillName].rating - 1].label}
-                          </Badge>
-                          <span className="text-sm font-bold text-purple-600">+{formData.skillRatings[skillName].rating * 5} XP</span>
-                        </div>
-                      )}
+                              <span className="text-sm font-bold text-purple-600">+{formData.skillRatings[skillName].rating * 5} XP</span>
+                            )}
                     </div>
                     
                     <div className="flex gap-2">
