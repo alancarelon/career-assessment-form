@@ -2,8 +2,8 @@ name: Keep Supabase Active
 
 on:
   schedule:
-    # Run every 6 hours (4 times per day)
-    - cron: '0 */6 * * *'
+    # Run every 4 hours (6 times per day)
+    - cron: '0 */4 * * *'
   workflow_dispatch: # Allows manual trigger
 
 jobs:
