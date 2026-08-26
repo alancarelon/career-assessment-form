@@ -10,8 +10,11 @@ import { supabase } from '../lib/supabase'
 interface FormData {
   // Step 1: Career Aspirations
   careerGrowth: string
+  careerGrowthOther: string // For "Other" option
   futureVision: string
+  futureVisionOther: string // For "Other" option
   growthAreas: string[]
+  growthAreasOther: string // For "Other" option
   
   // Track selection removed - all skills assessed for everyone
   
@@ -21,12 +24,15 @@ interface FormData {
   
   // Step 4: Superpowers
   strengths: string[]
+  strengthsOther: string // For "Other" option
   teammatesFeedback: string
   proudAccomplishment: string
   
   // Step 5: Growth Opportunities
   skillsToImprove: string[]
+  skillsToImproveOther: string // For "Other" option
   growthLimits: string[]
+  growthLimitsOther: string // For "Other" option
   learningStyle: string[]
   
   // Step 6: Community
@@ -46,15 +52,21 @@ interface FormData {
 
 const initialFormData: FormData = {
   careerGrowth: '',
+  careerGrowthOther: '',
   futureVision: '',
+  futureVisionOther: '',
   growthAreas: [],
+  growthAreasOther: '',
   skillRatings: {},
   multiSelectResponses: {},
   strengths: [],
+  strengthsOther: '',
   teammatesFeedback: '',
   proudAccomplishment: '',
   skillsToImprove: [],
+  skillsToImproveOther: '',
   growthLimits: [],
+  growthLimitsOther: '',
   learningStyle: [],
   teachingTopic: '',
   mentorInterest: '',
@@ -75,6 +87,7 @@ const careerOptions = [
   'Design Researcher',
   'Design Systems Specialist',
   'Not Sure Yet',
+  'Other',
 ]
 
 const futureVisionOptions = [
@@ -84,6 +97,7 @@ const futureVisionOptions = [
   'Leading teams',
   'Driving product strategy',
   'Influencing business decisions',
+  'Other',
 ]
 
 const growthAreasOptions = [
@@ -98,6 +112,7 @@ const growthAreasOptions = [
   'Design Systems',
   'Product Thinking',
   'Data & Analytics',
+  'Other',
 ]
 
 // Unused - kept for reference
@@ -192,6 +207,7 @@ const strengthsOptions = [
   'Leadership',
   'Problem Solving',
   'Data Analysis',
+  'Other',
 ]
 
 const growthLimitsOptions = [
@@ -204,6 +220,7 @@ const growthLimitsOptions = [
   'Need confidence',
   'Need leadership opportunities',
   'Time constraints',
+  'Other',
 ]
 
 const learningStyleOptions = [
@@ -2106,6 +2123,20 @@ export default function UXGrowthJourney() {
                   </label>
                 ))}
               </div>
+              {formData.strengths.includes('Other') && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify your other strength:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.strengthsOther}
+                    onChange={(e) => updateFormData('strengthsOther', e.target.value)}
+                    placeholder="Enter your strength..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-achievement-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -2211,6 +2242,20 @@ export default function UXGrowthJourney() {
                   </label>
                 ))}
               </div>
+              {formData.skillsToImprove.includes('Other') && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify the skill you'd like to improve:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.skillsToImproveOther}
+                    onChange={(e) => updateFormData('skillsToImproveOther', e.target.value)}
+                    placeholder="Enter the skill..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -2238,6 +2283,20 @@ export default function UXGrowthJourney() {
                   </label>
                 ))}
               </div>
+              {formData.growthLimits.includes('Other') && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify what limits your growth:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.growthLimitsOther}
+                    onChange={(e) => updateFormData('growthLimitsOther', e.target.value)}
+                    placeholder="Enter what limits your growth..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -2415,6 +2474,20 @@ export default function UXGrowthJourney() {
                   </button>
                 ))}
               </div>
+              {formData.careerGrowth === 'Other' && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify your career growth path:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.careerGrowthOther}
+                    onChange={(e) => updateFormData('careerGrowthOther', e.target.value)}
+                    placeholder="Enter your career path..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -2437,6 +2510,20 @@ export default function UXGrowthJourney() {
                   </button>
                 ))}
               </div>
+              {formData.futureVision === 'Other' && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify your future vision:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.futureVisionOther}
+                    onChange={(e) => updateFormData('futureVisionOther', e.target.value)}
+                    placeholder="Enter your vision..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -2464,6 +2551,20 @@ export default function UXGrowthJourney() {
                   </label>
                 ))}
               </div>
+              {formData.growthAreas.includes('Other') && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Please specify the growth area:
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.growthAreasOther}
+                    onChange={(e) => updateFormData('growthAreasOther', e.target.value)}
+                    placeholder="Enter the growth area..."
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-growth-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </Card>
           </div>
 
