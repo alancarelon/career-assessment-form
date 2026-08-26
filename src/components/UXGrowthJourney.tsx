@@ -740,8 +740,11 @@ export default function UXGrowthJourney() {
           
           // Step 1: Career Vision
           career_growth: formData.careerGrowth,
+          career_growth_other: formData.careerGrowthOther,
           future_vision: formData.futureVision,
+          future_vision_other: formData.futureVisionOther,
           growth_areas: formData.growthAreas,
+          growth_areas_other: formData.growthAreasOther,
           
           // Step 2: Self Assessment
           skill_ratings: formData.skillRatings,
@@ -749,12 +752,15 @@ export default function UXGrowthJourney() {
           
           // Step 3: Superpowers
           strengths: formData.strengths,
+          strengths_other: formData.strengthsOther,
           teammates_feedback: formData.teammatesFeedback,
           proud_accomplishment: formData.proudAccomplishment,
           
           // Step 4: Growth Opportunities
           skills_to_improve: formData.skillsToImprove,
+          skills_to_improve_other: formData.skillsToImproveOther,
           growth_limits: formData.growthLimits,
+          growth_limits_other: formData.growthLimitsOther,
           learning_style: formData.learningStyle,
           
           // Step 5: Community
