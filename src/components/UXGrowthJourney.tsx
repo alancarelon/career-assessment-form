@@ -729,17 +729,11 @@ export default function UXGrowthJourney() {
 
   // Check for duplicate submission based on Name + AGID + Email
   const checkForDuplicate = async () => {
-    console.log('=== DUPLICATE CHECK (Name + AGID + Email) ===')
-    console.log('Checking:', { name: formData.name, agid: formData.agid, email: formData.email })
-    
-    const { data: existingSubmissions, error: checkError } = await supabase
+    const { data: existingSubmissions } = await supabase
       .from('assessments')
       .select('name, agid, email')
       .eq('name', formData.name)
       .eq('email', formData.email)
-
-    console.log('Existing submissions found:', existingSubmissions)
-    console.log('Error:', checkError)
 
     if (existingSubmissions && existingSubmissions.length > 0) {
       // If AGID is provided, check for exact match
@@ -756,7 +750,6 @@ export default function UXGrowthJourney() {
       }
     }
     
-    console.log('No duplicate found')
     return true
   }
 
