@@ -730,7 +730,9 @@ export default function UXGrowthJourney() {
   const handleSubmit = async () => {
     if (isFormComplete()) {
       // Check for duplicate email before submitting
+      alert(`DEBUG: About to check email: ${formData.email}`)
       console.log('Checking for duplicate email:', formData.email)
+      
       const { data: existingSubmissions, error: checkError } = await supabase
         .from('assessments')
         .select('email')
@@ -738,6 +740,7 @@ export default function UXGrowthJourney() {
 
       console.log('Existing submissions:', existingSubmissions)
       console.log('Check error:', checkError)
+      alert(`DEBUG: Found ${existingSubmissions?.length || 0} existing submissions`)
 
       if (existingSubmissions && existingSubmissions.length > 0) {
         console.log('Duplicate found! Blocking submission.')
