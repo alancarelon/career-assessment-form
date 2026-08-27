@@ -729,6 +729,24 @@ export default function UXGrowthJourney() {
 
   const handleSubmit = async () => {
     if (isFormComplete()) {
+      // Check for duplicate email before submitting
+      try {
+        const { data: existingSubmission, error: checkError } = await supabase
+          .from('assessments')
+          .select('email')
+          .eq('email', formData.email)
+          .single()
+
+        if (existingSubmission) {
+          alert('You have already submitted this assessment with this email address. Each person can only submit once. If you need to update your responses, please contact your administrator.')
+          return
+        }
+
+        // If no existing submission (error means no match found), proceed with save
+      } catch (checkErr) {
+        // Error is expected when no match is found - this is good, continue
+      }
+
       // Save to Supabase with complete data
       try {
         const submissionData = {
@@ -778,13 +796,19 @@ export default function UXGrowthJourney() {
 
         if (error) {
           console.error('Error saving to Supabase:', error)
-          alert('Failed to save your assessment. Please try again.')
+          if (error.code === '23505') {
+            alert('You have already submitted this assessment with this email address. Each person can only submit once.')
+          } else {
+            alert('Failed to save your assessment. Please try again.')
+          }
+          return
         } else {
           console.log('Successfully saved to Supabase!')
         }
       } catch (err) {
         console.error('Exception saving to Supabase:', err)
         alert('An error occurred while saving. Please try again.')
+        return
       }
 
       setShowResults(true)
