@@ -727,6 +727,39 @@ export default function UXGrowthJourney() {
     return incomplete
   }
 
+  // Check for duplicate submission based on Name + AGID + Email
+  const checkForDuplicate = async () => {
+    console.log('=== DUPLICATE CHECK (Name + AGID + Email) ===')
+    console.log('Checking:', { name: formData.name, agid: formData.agid, email: formData.email })
+    
+    const { data: existingSubmissions, error: checkError } = await supabase
+      .from('assessments')
+      .select('name, agid, email')
+      .eq('name', formData.name)
+      .eq('email', formData.email)
+
+    console.log('Existing submissions found:', existingSubmissions)
+    console.log('Error:', checkError)
+
+    if (existingSubmissions && existingSubmissions.length > 0) {
+      // If AGID is provided, check for exact match
+      if (formData.agid) {
+        const exactMatch = existingSubmissions.some(sub => sub.agid === formData.agid)
+        if (exactMatch) {
+          alert('You have already submitted this assessment. Each person can only submit once.\n\nIf you need to update your responses, please contact your administrator.')
+          return false
+        }
+      } else {
+        // No AGID, just check name + email
+        alert('You have already submitted this assessment. Each person can only submit once.\n\nIf you need to update your responses, please contact your administrator.')
+        return false
+      }
+    }
+    
+    console.log('No duplicate found')
+    return true
+  }
+
   const handleSubmit = async () => {
     if (isFormComplete()) {
       // Check for duplicate email before submitting
@@ -1811,7 +1844,12 @@ export default function UXGrowthJourney() {
 
             <div className="mt-8 flex justify-end">
               <Button
-                onClick={() => setCurrentStep(1)}
+                onClick={async () => {
+                  const canProceed = await checkForDuplicate()
+                  if (canProceed) {
+                    setCurrentStep(1)
+                  }
+                }}
                 disabled={!formData.currentRole || !formData.name || !formData.email}
                 size="lg"
               >
