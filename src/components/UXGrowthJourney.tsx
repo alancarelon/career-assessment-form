@@ -807,6 +807,9 @@ export default function UXGrowthJourney() {
           return
         } else {
           console.log('Successfully saved to Supabase!')
+          // Clear localStorage after successful submission so user starts fresh next time
+          localStorage.removeItem('uxGrowthJourney_formData')
+          localStorage.removeItem('uxGrowthJourney_currentStep')
         }
       } catch (err) {
         console.error('Exception saving to Supabase:', err)
