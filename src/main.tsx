@@ -5,6 +5,8 @@ import App from './App.tsx'
 import AdminDashboard from './pages/AdminDashboard.tsx'
 import UserReport from './pages/UserReport.tsx'
 import TestConnection from './pages/TestConnection.tsx'
+import ManagerDashboard from './pages/ManagerDashboard.tsx'
+import ManagerAssess from './pages/ManagerAssess.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -15,6 +17,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/user/:id" element={<UserReport />} />
         <Route path="/test" element={<TestConnection />} />
+        <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+        <Route path="/manager-assess/:id" element={<ManagerAssess />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
