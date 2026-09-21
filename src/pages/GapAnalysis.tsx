@@ -29,14 +29,14 @@ interface CategoryGap {
 }
 
 const CATEGORIES = [
-  { id: 'ux_research', name: 'UX Research' },
-  { id: 'interaction_design', name: 'Interaction Design' },
-  { id: 'visual_design', name: 'Visual Design' },
-  { id: 'accessibility', name: 'Accessibility' },
-  { id: 'facilitation', name: 'Facilitation' },
-  { id: 'stakeholder_management', name: 'Stakeholder Management' },
-  { id: 'workshop_facilitation', name: 'Workshop Facilitation' },
-  { id: 'ai_for_ux', name: 'AI for UX' }
+  { id: 'problem_discovery', name: 'Problem Discovery & Product Understanding' },
+  { id: 'ux_research', name: 'UX Research and Validation' },
+  { id: 'design_execution', name: 'Design Execution and Craft' },
+  { id: 'ai_integration', name: 'AI and Design Integration' },
+  { id: 'design_systems', name: 'Design System and Consistency' },
+  { id: 'documentation', name: 'Documentation and Knowledge Sharing' },
+  { id: 'collaboration', name: 'Collaboration and Stakeholder Management' },
+  { id: 'professional_growth', name: 'Professional Growth and Community Contribution' }
 ]
 
 export default function GapAnalysis() {
@@ -55,8 +55,65 @@ export default function GapAnalysis() {
   const getSelfRatingForCategory = (categoryId: string, skillRatings: any): number | null => {
     if (!skillRatings) return null
     
+    // Map category IDs to the actual category names in the associate assessment
+    const categoryNameMap: Record<string, string> = {
+      'problem_discovery': 'Problem Discovery & Product Understanding',
+      'ux_research': 'UX Research and Validation',
+      'design_execution': 'Design Execution and Craft',
+      'ai_integration': 'AI and Design Integration',
+      'design_systems': 'Design System and Consistency',
+      'documentation': 'Documentation and Knowledge Sharing',
+      'collaboration': 'Collaboration and Stakeholder Management',
+      'professional_growth': 'Professional Growth and Community Contribution'
+    }
+    
+    const categoryName = categoryNameMap[categoryId]
+    if (!categoryName) return null
+    
+    // Find all skills that belong to this category
+    // Skills are stored with their full question text as keys
     const categoryRatings = Object.entries(skillRatings)
-      .filter(([key]) => key.toLowerCase().includes(categoryId.replace('_', '')))
+      .filter(([key]) => {
+        // Match based on category keywords
+        const keyLower = key.toLowerCase()
+        
+        if (categoryId === 'problem_discovery') {
+          return keyLower.includes('problem') || keyLower.includes('discovery') || 
+                 keyLower.includes('business goal') || keyLower.includes('success criteria')
+        }
+        if (categoryId === 'ux_research') {
+          return keyLower.includes('research') || keyLower.includes('usability') || 
+                 keyLower.includes('testing') || keyLower.includes('user feedback')
+        }
+        if (categoryId === 'design_execution') {
+          return keyLower.includes('design') && (keyLower.includes('execution') || 
+                 keyLower.includes('wireframe') || keyLower.includes('prototype') ||
+                 keyLower.includes('translate') || keyLower.includes('flows'))
+        }
+        if (categoryId === 'ai_integration') {
+          return keyLower.includes('ai') || keyLower.includes('artificial intelligence')
+        }
+        if (categoryId === 'design_systems') {
+          return keyLower.includes('design system') || keyLower.includes('component') ||
+                 keyLower.includes('pattern') || keyLower.includes('consistency')
+        }
+        if (categoryId === 'documentation') {
+          return keyLower.includes('documentation') || keyLower.includes('handoff') ||
+                 keyLower.includes('figjam') || keyLower.includes('artifact')
+        }
+        if (categoryId === 'collaboration') {
+          return keyLower.includes('collaboration') || keyLower.includes('stakeholder') ||
+                 keyLower.includes('present') || keyLower.includes('feedback') ||
+                 keyLower.includes('workshop') || keyLower.includes('facilitate')
+        }
+        if (categoryId === 'professional_growth') {
+          return keyLower.includes('growth') || keyLower.includes('learning') ||
+                 keyLower.includes('skill') || keyLower.includes('knowledge') ||
+                 keyLower.includes('community') || keyLower.includes('career')
+        }
+        
+        return false
+      })
       .map(([, value]: [string, any]) => {
         return typeof value === 'object' ? value.rating : Number(value)
       })

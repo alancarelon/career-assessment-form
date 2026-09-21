@@ -19,67 +19,67 @@ interface CategoryInfo {
 
 const CATEGORIES: CategoryInfo[] = [
   {
+    id: 'problem_discovery',
+    name: 'Problem Discovery & Product Understanding',
+    questions: [
+      'How effectively do they define problems, user needs, and business goals before starting design work?',
+      'How well do they create discovery briefs and align with stakeholders on project direction?'
+    ]
+  },
+  {
     id: 'ux_research',
-    name: 'UX Research',
+    name: 'UX Research and Validation',
     questions: [
-      'How effectively do they plan and conduct user research?',
-      'How well do they synthesize findings into actionable insights?'
+      'How effectively do they plan and conduct usability testing or evaluative research?',
+      'How well do they synthesize research findings into actionable design insights?'
     ]
   },
   {
-    id: 'interaction_design',
-    name: 'Interaction Design',
+    id: 'design_execution',
+    name: 'Design Execution and Craft',
     questions: [
-      'How effectively do they design user flows and interactions?',
-      'How well do they balance user needs with technical constraints?'
+      'How effectively do they translate requirements into flows, wireframes, and high-fidelity designs?',
+      'How well do they balance user needs, business goals, and technical constraints in their designs?'
     ]
   },
   {
-    id: 'visual_design',
-    name: 'Visual Design',
+    id: 'ai_integration',
+    name: 'AI and Design Integration',
     questions: [
-      'How strong is their visual design execution?',
-      'How well do they apply design systems and maintain consistency?'
+      'How effectively do they use AI tools to support their UX workflow (research, ideation, documentation)?',
+      'How well do they identify opportunities where AI can improve the user experience?'
     ]
   },
   {
-    id: 'accessibility',
-    name: 'Accessibility',
+    id: 'design_systems',
+    name: 'Design System and Consistency',
     questions: [
-      'How well do they design for inclusive experiences?',
-      'How effectively do they implement accessibility standards?'
+      'How consistently do they use approved Design System components and patterns?',
+      'How well do they understand and apply accessibility and consistency guidelines?'
     ]
   },
   {
-    id: 'facilitation',
-    name: 'Facilitation',
+    id: 'documentation',
+    name: 'Documentation and Knowledge Sharing',
     questions: [
-      'How effectively do they lead design discussions?',
-      'How well do they guide teams through design processes?'
+      'How effectively do they create complete documentation to support design handoffs?',
+      'How clearly do their artifacts communicate design intent and decisions to engineers and stakeholders?'
     ]
   },
   {
-    id: 'stakeholder_management',
-    name: 'Stakeholder Management',
+    id: 'collaboration',
+    name: 'Collaboration and Stakeholder Management',
     questions: [
-      'How effectively do they communicate design decisions?',
-      'How well do they manage stakeholder expectations?'
+      'How effectively do they present their work and engage stakeholders throughout the design process?',
+      'How well do they incorporate cross-functional feedback and manage expectations?'
     ]
   },
   {
-    id: 'workshop_facilitation',
-    name: 'Workshop Facilitation',
+    id: 'professional_growth',
+    name: 'Professional Growth and Community Contribution',
     questions: [
-      'How effectively do they plan and run collaborative sessions?',
-      'How well do they engage participants and drive outcomes?'
-    ]
-  },
-  {
-    id: 'ai_for_ux',
-    name: 'AI for UX',
-    questions: [
-      'How effectively do they leverage AI tools in their work?',
-      'How well do they understand AI implications for UX?'
+      'How actively do they invest in developing new UX skills and knowledge?',
+      'How effectively do they share knowledge and contribute to the design community?'
     ]
   }
 ]
