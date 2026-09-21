@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart, Eye, Filter, X } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Download, RefreshCw, Calendar, Mail, User, TrendingUp, Target, Award, BarChart3, PieChart, Eye, Filter, X, Lock } from 'lucide-react'
 import { supabase, AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Card from '../components/Card'
 import Button from '../components/Button'
 
+const ADMIN_PASSWORD = 'uxgrowth2024'
+
 export default function AdminDashboard() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [authError, setAuthError] = useState('')
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -17,6 +23,76 @@ export default function AdminDashboard() {
     performance: 'all' as 'all' | 'high' | 'ontrack' | 'needs',
     dateRange: 'all' as 'all' | 'week' | 'month' | 'quarter'
   })
+
+  useEffect(() => {
+    const urlPassword = searchParams.get('password')
+    const storedAuth = sessionStorage.getItem('admin_authenticated')
+    
+    if (urlPassword === ADMIN_PASSWORD || storedAuth === 'true') {
+      setIsAuthenticated(true)
+      sessionStorage.setItem('admin_authenticated', 'true')
+    }
+  }, [searchParams])
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true)
+      sessionStorage.setItem('admin_authenticated', 'true')
+      setAuthError('')
+    } else {
+      setAuthError('Incorrect password. Please try again.')
+      setPassword('')
+    }
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+              <Lock className="w-8 h-8 text-purple-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+            <p className="text-gray-600">Enter password to access</p>
+          </div>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter admin password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                autoFocus
+              />
+              {authError && (
+                <p className="text-red-600 text-sm mt-2">{authError}</p>
+              )}
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              Access Dashboard
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => navigate('/')}
+              className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+            >
+              ← Back to Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const fetchSubmissions = async () => {
     setLoading(true)
