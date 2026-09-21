@@ -217,10 +217,10 @@ export default function ManagerDashboard() {
           </div>
         </div>
 
-        {/* Assessments List */}
-        <div className="space-y-4">
+        {/* Assessments Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAssessments.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <div className="col-span-full bg-white rounded-xl shadow-md p-12 text-center">
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No assessments found</h3>
               <p className="text-gray-600">
@@ -233,87 +233,83 @@ export default function ManagerDashboard() {
             filteredAssessments.map((assessment) => (
               <div
                 key={assessment.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-5 flex flex-col"
               >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {assessment.name}
-                      </h3>
-                      {assessment.manager_assessment_status === 'completed' && (
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                          ✅ Completed
-                        </span>
-                      )}
-                      {assessment.manager_assessment_status === 'in_progress' && (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                          🔄 In Progress
-                        </span>
-                      )}
-                      {assessment.manager_assessment_status === 'pending' && (
-                        <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                          ⏳ Pending
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 mb-1">
-                      <span className="font-medium">{assessment.current_role}</span>
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {assessment.email}
-                      {assessment.agid && ` • AGID: ${assessment.agid}`}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Self-assessment submitted: {new Date(assessment.created_at!).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </p>
-                    {assessment.manager_completed_at && (
-                      <p className="text-sm text-green-600 mt-1">
-                        Manager assessment completed: {new Date(assessment.manager_completed_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </p>
+                {/* Header */}
+                <div className="mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate" title={assessment.name}>
+                    {assessment.name}
+                  </h3>
+                  
+                  {/* Status Badge */}
+                  <div className="mb-2">
+                    {assessment.manager_assessment_status === 'completed' && (
+                      <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        ✅ Completed
+                      </span>
+                    )}
+                    {assessment.manager_assessment_status === 'in_progress' && (
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        🔄 In Progress
+                      </span>
+                    )}
+                    {assessment.manager_assessment_status === 'pending' && (
+                      <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                        ⏳ Pending
+                      </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => navigate(`/admin/user/${assessment.id}`)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                    >
-                      📄 View Self-Assessment
-                    </button>
-                    
-                    {assessment.manager_assessment_status === 'completed' ? (
-                      <>
-                        <button
-                          onClick={() => navigate(`/manager-assess/${assessment.id}`)}
-                          className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium"
-                        >
-                          ✏️ Edit Assessment
-                        </button>
-                        <button
-                          onClick={() => navigate(`/gap-analysis/${assessment.id}`)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                        >
-                          📊 View Gap Analysis
-                        </button>
-                      </>
-                    ) : (
+                  {/* Role */}
+                  <p className="text-sm text-gray-600 font-medium mb-1 truncate" title={assessment.current_role}>
+                    {assessment.current_role}
+                  </p>
+
+                  {/* Email */}
+                  <p className="text-xs text-gray-500 truncate" title={assessment.email}>
+                    {assessment.email}
+                  </p>
+
+                  {/* Dates */}
+                  <p className="text-xs text-gray-400 mt-2">
+                    Submitted: {new Date(assessment.created_at!).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-auto space-y-2">
+                  {assessment.manager_assessment_status === 'completed' ? (
+                    <>
+                      <button
+                        onClick={() => navigate(`/gap-analysis/${assessment.id}`)}
+                        className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                      >
+                        � View Gap Analysis
+                      </button>
                       <button
                         onClick={() => navigate(`/manager-assess/${assessment.id}`)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                        className="w-full px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
                       >
-                        {assessment.manager_assessment_status === 'in_progress' ? '▶️ Continue Assessment' : '🚀 Start Assessment'}
+                        ✏️ Edit
                       </button>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => navigate(`/manager-assess/${assessment.id}`)}
+                      className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                    >
+                      {assessment.manager_assessment_status === 'in_progress' ? '▶️ Continue' : '🚀 Start Assessment'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigate(`/admin/user/${assessment.id}`)}
+                    className="w-full px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
+                  >
+                    📄 View Self-Assessment
+                  </button>
                 </div>
               </div>
             ))
