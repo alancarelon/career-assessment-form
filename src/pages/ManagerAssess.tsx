@@ -352,7 +352,7 @@ export default function ManagerAssess() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/manager-dashboard')}
+            onClick={() => navigate('/dashboard')}
             className="text-purple-600 hover:text-purple-700 font-medium mb-4 flex items-center gap-2"
           >
             ← Back to Dashboard
