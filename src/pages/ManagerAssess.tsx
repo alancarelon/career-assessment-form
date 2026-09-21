@@ -284,32 +284,6 @@ export default function ManagerAssess() {
     }
   }
 
-  const getSelfRatingForCategory = (categoryId: string): number | null => {
-    if (!assessment?.skill_ratings) return null
-    
-    const categoryRatings = Object.entries(assessment.skill_ratings)
-      .filter(([key]) => key.toLowerCase().includes(categoryId.replace('_', '')))
-      .map(([, value]) => value.rating)
-    
-    if (categoryRatings.length === 0) return null
-    
-    return categoryRatings.reduce((a, b) => a + b, 0) / categoryRatings.length
-  }
-
-  const getGapPreview = (categoryId: string, selectedRating: string): string => {
-    const selfRating = getSelfRatingForCategory(categoryId)
-    if (selfRating === null) return ''
-    
-    const option = ratingOptions.find(opt => opt.label === selectedRating)
-    if (!option || option.numeric_value === null) return ''
-    
-    const gap = selfRating - option.numeric_value
-    
-    if (Math.abs(gap) <= 0.5) return '✅ Well calibrated'
-    if (gap > 0.5) return '⚠️ Possible overestimation'
-    if (gap < -0.5) return '⬆️ Hidden strength'
-    return ''
-  }
 
   if (loading) {
     return (
@@ -343,8 +317,7 @@ export default function ManagerAssess() {
   }
 
   const category = CATEGORIES[currentCategory]
-  const progress = (Object.keys(ratings).length / CATEGORIES.length) * 100
-  const selfRating = getSelfRatingForCategory(category.id)
+  const progress = Math.min((Object.keys(ratings).length / CATEGORIES.length) * 100, 100)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -395,29 +368,7 @@ export default function ManagerAssess() {
               </h2>
             </div>
 
-            {/* Self-Rating Display */}
-            {selfRating !== null && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm font-medium text-blue-900 mb-1">
-                  👤 Designer self-rated:
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={star <= Math.round(selfRating) ? 'text-yellow-400' : 'text-gray-300'}
-                      >
-                        ⭐
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-lg font-semibold text-blue-900">
-                    ({selfRating.toFixed(1)}/5)
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Self-Rating Display - Hidden to prevent bias */}
 
             {/* Guiding Questions */}
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
@@ -473,14 +424,7 @@ export default function ManagerAssess() {
                 ))}
               </div>
 
-              {/* Gap Preview */}
-              {ratings[category.id] && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">
-                    💡 Gap Preview: {getGapPreview(category.id, ratings[category.id])}
-                  </p>
-                </div>
-              )}
+              {/* Gap Preview - Hidden to prevent bias during assessment */}
             </div>
           </div>
         </div>
