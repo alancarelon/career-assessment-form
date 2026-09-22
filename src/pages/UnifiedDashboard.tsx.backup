@@ -141,48 +141,26 @@ export default function UnifiedDashboard() {
     return Object.entries(roleCounts).map(([name, value]) => ({ name, value }))
   }
 
-  const getCategoryDistribution = () => {
-    const categoryKeywords: Record<string, string[]> = {
-      'Problem Discovery & Product Understanding': ['problem', 'discovery', 'define', 'business objective', 'success criteria', 'alignment'],
-      'UX Research and Validation': ['research', 'usability testing', 'user feedback', 'insights', 'validation'],
-      'Design Execution and Craft': ['wireframes', 'high-fidelity', 'prototypes', 'flows', 'iterate'],
-      'AI and Design Integration': ['AI tools', 'AI workflow', 'AI-enabled', 'AI to accelerate'],
-      'Design System and Consistency': ['Design System', 'components', 'patterns', 'accessibility', 'consistency'],
-      'Collaboration & Communication': ['stakeholder', 'cross-functional', 'communicate', 'present', 'feedback'],
-      'Strategic Thinking & Impact': ['strategic', 'business impact', 'metrics', 'advocate', 'authority']
-    }
-
-    const categoryData: Record<string, { ratings: number[], associates: Set<string> }> = {}
+  const getSkillDistribution = () => {
+    const skillAverages: Record<string, number[]> = {}
     
-    Object.keys(categoryKeywords).forEach(category => {
-      categoryData[category] = { ratings: [], associates: new Set() }
-    })
-
     assessments.forEach(assessment => {
       if (assessment.skill_ratings) {
-        Object.entries(assessment.skill_ratings).forEach(([skillName, data]: [string, any]) => {
+        Object.entries(assessment.skill_ratings).forEach(([skill, data]: [string, any]) => {
           const rating = typeof data === 'object' ? data.rating : Number(data)
-          const skillLower = skillName.toLowerCase()
-          
-          for (const [category, keywords] of Object.entries(categoryKeywords)) {
-            if (keywords.some(keyword => skillLower.includes(keyword.toLowerCase()))) {
-              categoryData[category].ratings.push(rating)
-              categoryData[category].associates.add(assessment.id!)
-              break
-            }
-          }
+          if (!skillAverages[skill]) skillAverages[skill] = []
+          skillAverages[skill].push(rating)
         })
       }
     })
 
-    return Object.entries(categoryData)
-      .filter(([_, data]) => data.ratings.length > 0)
-      .map(([category, data]) => ({
-        category,
-        average: data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length,
-        associateCount: data.associates.size
+    return Object.entries(skillAverages)
+      .map(([skill, ratings]) => ({
+        skill: skill.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        average: ratings.reduce((a, b) => a + b, 0) / ratings.length
       }))
       .sort((a, b) => b.average - a.average)
+      .slice(0, 10)
   }
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316']
@@ -523,29 +501,26 @@ export default function UnifiedDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Skill Categories - New Design */}
+                {/* Top Skills - New Design */}
                 <div className="bg-white rounded-xl shadow-md p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Skill Categories - Team Performance</h3>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                    {getCategoryDistribution().map((cat, index) => {
-                      const percentage = (cat.average / 5) * 100
-                      const color = cat.average >= 4 ? 'bg-green-500' : cat.average >= 3 ? 'bg-blue-500' : 'bg-orange-500'
-                      const bgColor = cat.average >= 4 ? 'bg-green-50' : cat.average >= 3 ? 'bg-blue-50' : 'bg-orange-50'
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 10 Skills - Team Performance</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {getSkillDistribution().map((skill, index) => {
+                      const percentage = (skill.average / 5) * 100
+                      const color = skill.average >= 4 ? 'bg-green-500' : skill.average >= 3 ? 'bg-blue-500' : 'bg-orange-500'
+                      const bgColor = skill.average >= 4 ? 'bg-green-50' : skill.average >= 3 ? 'bg-blue-50' : 'bg-orange-50'
                       
                       return (
                         <div key={index} className={`p-3 rounded-lg border ${bgColor} border-gray-200`}>
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span className="text-sm font-bold text-gray-400">#{index + 1}</span>
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-800 text-xs" title={cat.category}>
-                                  {cat.category}
-                                </h4>
-                                <p className="text-[10px] text-gray-500">{cat.associateCount} team members</p>
-                              </div>
+                              <h4 className="font-medium text-gray-800 text-xs truncate" title={skill.skill}>
+                                {skill.skill}
+                              </h4>
                             </div>
                             <div className="text-right ml-2">
-                              <div className="text-lg font-bold text-gray-800">{cat.average.toFixed(1)}</div>
+                              <div className="text-lg font-bold text-gray-800">{skill.average.toFixed(1)}</div>
                               <div className="text-[10px] text-gray-500">/ 5.0</div>
                             </div>
                           </div>
