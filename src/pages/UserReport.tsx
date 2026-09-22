@@ -297,6 +297,12 @@ export default function UserReport() {
                   <span className="font-medium">{strength}</span>
                 </li>
               ))}
+              {user.strengths_other && (
+                <li className="flex items-start gap-3 text-slate-700">
+                  <span className="text-green-600 text-xl mt-0.5">✓</span>
+                  <span className="font-medium">{user.strengths_other} <span className="text-xs text-slate-500">(Other)</span></span>
+                </li>
+              )}
             </ul>
             {user.teammates_feedback && (
               <div className="mt-4 p-4 bg-white rounded-lg border-l-4 border-green-500">
@@ -325,6 +331,12 @@ export default function UserReport() {
                   <span className="font-medium">{skill}</span>
                 </li>
               ))}
+              {user.skills_to_improve_other && (
+                <li className="flex items-start gap-3 text-slate-700">
+                  <span className="text-orange-600 text-xl mt-0.5">→</span>
+                  <span className="font-medium">{user.skills_to_improve_other} <span className="text-xs text-slate-500">(Other)</span></span>
+                </li>
+              )}
             </ul>
             {user.learning_style && user.learning_style.length > 0 && (
               <div className="mt-4 p-4 bg-white rounded-lg">
@@ -338,6 +350,18 @@ export default function UserReport() {
                 <p className="text-slate-700">{user.growth_areas.join(', ')}</p>
               </div>
             )}
+            {user.growth_areas_other && (
+              <div className="mt-4 p-4 bg-white rounded-lg">
+                <p className="text-sm font-semibold text-orange-800 mb-2">Other Growth Area:</p>
+                <p className="text-slate-700">{user.growth_areas_other}</p>
+              </div>
+            )}
+            {user.growth_limits_other && (
+              <div className="mt-4 p-4 bg-white rounded-lg">
+                <p className="text-sm font-semibold text-orange-800 mb-2">Other Growth Limit:</p>
+                <p className="text-slate-700">{user.growth_limits_other}</p>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -348,10 +372,16 @@ export default function UserReport() {
             <div className="bg-white p-5 rounded-lg">
               <p className="text-sm font-semibold text-blue-800 mb-2">Career Growth</p>
               <p className="text-slate-700 text-lg">{user.career_growth || 'Not specified'}</p>
+              {user.career_growth_other && (
+                <p className="text-slate-600 text-sm mt-2"><span className="font-semibold">Other:</span> {user.career_growth_other}</p>
+              )}
             </div>
             <div className="bg-white p-5 rounded-lg">
               <p className="text-sm font-semibold text-blue-800 mb-2">Future Vision</p>
               <p className="text-slate-700 text-lg">{user.future_vision || 'Not specified'}</p>
+              {user.future_vision_other && (
+                <p className="text-slate-600 text-sm mt-2"><span className="font-semibold">Other:</span> {user.future_vision_other}</p>
+              )}
             </div>
             <div className="bg-white p-5 rounded-lg">
               <p className="text-sm font-semibold text-blue-800 mb-2">6-Month Goal</p>
