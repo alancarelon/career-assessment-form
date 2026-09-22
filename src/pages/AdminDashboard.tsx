@@ -338,6 +338,33 @@ export default function AdminDashboard() {
       .sort((a, b) => b.value - a.value)
   }
 
+  const getTopSkillsWithAverages = () => {
+    const skillData: Record<string, { total: number; count: number }> = {}
+    
+    submissions.forEach(sub => {
+      const skillRatings = sub.skill_ratings || {}
+      Object.entries(skillRatings).forEach(([skillName, ratingData]: [string, any]) => {
+        if (ratingData?.rating) {
+          if (!skillData[skillName]) {
+            skillData[skillName] = { total: 0, count: 0 }
+          }
+          skillData[skillName].total += ratingData.rating
+          skillData[skillName].count += 1
+        }
+      })
+    })
+    
+    return Object.entries(skillData)
+      .map(([name, data]) => ({
+        name: name.length > 30 ? name.substring(0, 30) + '...' : name,
+        fullName: name,
+        average: Number((data.total / data.count).toFixed(2)),
+        count: data.count
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+  }
+
   const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
 
   if (loading) {
@@ -608,6 +635,55 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
               </Card>
             </div>
+
+            {/* Top 10 Skills with Average Ratings */}
+            <Card className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-5 h-5 text-growth-600" />
+                    <h3 className="text-xl font-bold text-slate-800">Top 10 Skills - Team Performance</h3>
+                  </div>
+                  <p className="text-sm text-slate-600">Most assessed skills with average team ratings</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {getTopSkillsWithAverages().map((skill, index) => {
+                  const percentage = (skill.average / 5) * 100
+                  const color = skill.average >= 4 ? 'bg-green-500' : skill.average >= 3 ? 'bg-blue-500' : 'bg-orange-500'
+                  const bgColor = skill.average >= 4 ? 'bg-green-50' : skill.average >= 3 ? 'bg-blue-50' : 'bg-orange-50'
+                  
+                  return (
+                    <div key={index} className={`p-4 rounded-lg border-2 ${bgColor} border-slate-200 hover:border-slate-300 transition-all`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-2xl font-bold text-slate-400 w-8">#{index + 1}</span>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-slate-800 text-sm" title={skill.fullName}>
+                              {skill.name}
+                            </h4>
+                            <p className="text-xs text-slate-500">{skill.count} team members assessed</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-slate-800">{skill.average}</div>
+                          <div className="text-xs text-slate-500">/ 5.0</div>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className={`h-full ${color} transition-all duration-500 rounded-full flex items-center justify-end pr-2`}
+                          style={{ width: `${percentage}%` }}
+                        >
+                          <span className="text-xs font-bold text-white">{percentage.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
           </>
         )}
 
