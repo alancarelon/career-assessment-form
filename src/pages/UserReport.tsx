@@ -288,7 +288,7 @@ export default function UserReport() {
           <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
             <h3 className="text-2xl font-bold text-green-900 mb-4 flex items-center gap-2">
               <Award className="w-6 h-6" />
-              Strengths
+              What are your biggest strengths?
             </h3>
             <ul className="space-y-3 mb-4">
               {user.strengths?.map((strength, i) => (
@@ -306,13 +306,13 @@ export default function UserReport() {
             </ul>
             {user.teammates_feedback && (
               <div className="mt-4 p-4 bg-white rounded-lg border-l-4 border-green-500">
-                <p className="text-sm font-semibold text-green-800 mb-2">Teammate Feedback:</p>
+                <p className="text-sm font-semibold text-green-800 mb-2">What do teammates usually come to you for?</p>
                 <p className="text-slate-700 italic">"{user.teammates_feedback}"</p>
               </div>
             )}
             {user.proud_accomplishment && (
               <div className="mt-4 p-4 bg-white rounded-lg">
-                <p className="text-sm font-semibold text-green-800 mb-2">Proud Accomplishment:</p>
+                <p className="text-sm font-semibold text-green-800 mb-2">What accomplishment are you most proud of recently?</p>
                 <p className="text-slate-700 italic">"{user.proud_accomplishment}"</p>
               </div>
             )}
@@ -322,7 +322,7 @@ export default function UserReport() {
           <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200">
             <h3 className="text-2xl font-bold text-orange-900 mb-4 flex items-center gap-2">
               <Target className="w-6 h-6" />
-              Growth Areas
+              Which skills would you most like to improve?
             </h3>
             <ul className="space-y-3 mb-4">
               {user.skills_to_improve?.map((skill, i) => (
@@ -354,6 +354,12 @@ export default function UserReport() {
               <div className="mt-4 p-4 bg-white rounded-lg">
                 <p className="text-sm font-semibold text-orange-800 mb-2">Other Growth Area:</p>
                 <p className="text-slate-700">{user.growth_areas_other}</p>
+              </div>
+            )}
+            {user.growth_limits && user.growth_limits.length > 0 && (
+              <div className="mt-4 p-4 bg-white rounded-lg">
+                <p className="text-sm font-semibold text-orange-800 mb-2">What currently limits your growth?</p>
+                <p className="text-slate-700">{user.growth_limits.join(', ')}</p>
               </div>
             )}
             {user.growth_limits_other && (
