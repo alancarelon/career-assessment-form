@@ -829,7 +829,8 @@ export default function UXGrowthJourney() {
           
           // Send email notification
           try {
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-assessment-notification`, {
+            console.log('Sending email notification...')
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-assessment-notification`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -842,6 +843,7 @@ export default function UXGrowthJourney() {
                 created_at: new Date().toISOString()
               })
             })
+            console.log('Email notification response:', response.status, await response.text())
           } catch (emailError) {
             console.error('Email notification failed:', emailError)
             // Don't block submission if email fails
