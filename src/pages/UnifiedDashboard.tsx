@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
-import { Download, RefreshCw, BarChart3, Eye } from 'lucide-react'
+import { Download, BarChart3, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface AssessmentWithStatus extends AssessmentSubmission {
   manager_assessment_status?: 'pending' | 'in_progress' | 'completed'
@@ -501,18 +501,39 @@ export default function UnifiedDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Top Skills */}
+                {/* Top Skills - New Design */}
                 <div className="bg-white rounded-xl shadow-md p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 10 Skills (Avg Rating)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={getSkillDistribution()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="skill" angle={-45} textAnchor="end" height={100} fontSize={10} />
-                      <YAxis domain={[0, 5]} />
-                      <Tooltip />
-                      <Bar dataKey="average" fill="#8b5cf6" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 10 Skills - Team Performance</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {getSkillDistribution().map((skill, index) => {
+                      const percentage = (skill.average / 5) * 100
+                      const color = skill.average >= 4 ? 'bg-green-500' : skill.average >= 3 ? 'bg-blue-500' : 'bg-orange-500'
+                      const bgColor = skill.average >= 4 ? 'bg-green-50' : skill.average >= 3 ? 'bg-blue-50' : 'bg-orange-50'
+                      
+                      return (
+                        <div key={index} className={`p-3 rounded-lg border ${bgColor} border-gray-200`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-sm font-bold text-gray-400">#{index + 1}</span>
+                              <h4 className="font-medium text-gray-800 text-xs truncate" title={skill.skill}>
+                                {skill.skill}
+                              </h4>
+                            </div>
+                            <div className="text-right ml-2">
+                              <div className="text-lg font-bold text-gray-800">{skill.average.toFixed(1)}</div>
+                              <div className="text-[10px] text-gray-500">/ 5.0</div>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className={`h-full ${color} transition-all duration-500 rounded-full`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
