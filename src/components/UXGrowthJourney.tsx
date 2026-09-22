@@ -826,6 +826,26 @@ export default function UXGrowthJourney() {
           // Clear localStorage after successful submission so user starts fresh next time
           localStorage.removeItem('uxGrowthJourney_formData')
           localStorage.removeItem('uxGrowthJourney_currentStep')
+          
+          // Send email notification
+          try {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-assessment-notification`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              },
+              body: JSON.stringify({
+                name: formData.name,
+                email: formData.email,
+                current_role: formData.currentRole,
+                created_at: new Date().toISOString()
+              })
+            })
+          } catch (emailError) {
+            console.error('Email notification failed:', emailError)
+            // Don't block submission if email fails
+          }
         }
       } catch (err) {
         console.error('Exception saving to Supabase:', err)
