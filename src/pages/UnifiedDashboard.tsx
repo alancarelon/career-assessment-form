@@ -5,6 +5,7 @@ import type { AssessmentSubmission } from '../lib/supabase'
 import { Download, BarChart3, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { CATEGORIES, getSelfCategoryRatings } from '../data/categories'
 
 interface AssessmentWithStatus extends AssessmentSubmission {
   manager_assessment_status?: 'pending' | 'in_progress' | 'completed'
@@ -68,7 +69,7 @@ export default function UnifiedDashboard() {
 
       const assessmentsWithStatus = assessmentsData?.map(assessment => {
         const managerAssessment = managerAssessments?.find(
-          ma => ma.associate_assessment_id === assessment.id
+          ma => ma.associate_assessment_id === assessment.id && (ma.assessor_role ?? 'manager') === 'manager'
         )
 
         return {
@@ -142,45 +143,22 @@ export default function UnifiedDashboard() {
   }
 
   const getCategoryDistribution = () => {
-    const categoryKeywords: Record<string, string[]> = {
-      'Problem Discovery & Product Understanding': ['problem', 'discovery', 'define', 'business objective', 'success criteria', 'alignment'],
-      'UX Research and Validation': ['research', 'usability testing', 'user feedback', 'insights', 'validation'],
-      'Design Execution and Craft': ['wireframes', 'high-fidelity', 'prototypes', 'flows', 'iterate'],
-      'AI and Design Integration': ['AI tools', 'AI workflow', 'AI-enabled', 'AI to accelerate'],
-      'Design System and Consistency': ['Design System', 'components', 'patterns', 'accessibility', 'consistency'],
-      'Collaboration & Communication': ['stakeholder', 'cross-functional', 'communicate', 'present', 'feedback'],
-      'Strategic Thinking & Impact': ['strategic', 'business impact', 'metrics', 'advocate', 'authority']
-    }
-
-    const categoryData: Record<string, { ratings: number[], associates: Set<string> }> = {}
-    
-    Object.keys(categoryKeywords).forEach(category => {
-      categoryData[category] = { ratings: [], associates: new Set() }
-    })
+    const perCategory: Record<string, number[]> = Object.fromEntries(CATEGORIES.map(c => [c.id, []]))
 
     assessments.forEach(assessment => {
-      if (assessment.skill_ratings) {
-        Object.entries(assessment.skill_ratings).forEach(([skillName, data]: [string, any]) => {
-          const rating = typeof data === 'object' ? data.rating : Number(data)
-          const skillLower = skillName.toLowerCase()
-          
-          for (const [category, keywords] of Object.entries(categoryKeywords)) {
-            if (keywords.some(keyword => skillLower.includes(keyword.toLowerCase()))) {
-              categoryData[category].ratings.push(rating)
-              categoryData[category].associates.add(assessment.id!)
-              break
-            }
-          }
-        })
-      }
+      const selfRatings = getSelfCategoryRatings(assessment.skill_ratings, assessment.current_role)
+      CATEGORIES.forEach(c => {
+        const rating = selfRatings[c.id]
+        if (rating !== null) perCategory[c.id].push(rating)
+      })
     })
 
-    return Object.entries(categoryData)
-      .filter(([_, data]) => data.ratings.length > 0)
-      .map(([category, data]) => ({
-        category,
-        average: data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length,
-        associateCount: data.associates.size
+    return CATEGORIES
+      .filter(c => perCategory[c.id].length > 0)
+      .map(c => ({
+        category: c.name,
+        average: perCategory[c.id].reduce((a, b) => a + b, 0) / perCategory[c.id].length,
+        associateCount: perCategory[c.id].length
       }))
       .sort((a, b) => b.average - a.average)
   }

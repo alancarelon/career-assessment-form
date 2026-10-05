@@ -7,7 +7,7 @@
 
 | Phase | Scope | Status |
 |---|---|---|
-| Phase 1 | Manager assessment + basic gap analysis | 🟡 ~85% – close-out pending |
+| Phase 1 | Manager assessment + basic gap analysis | 🟡 ~95% – SQL migration + E2E test pending |
 | Phase 2 | Stakeholder feedback | ⬜ Not started |
 | Phase 3 | Versioned, admin-editable categories | ⬜ Not started |
 | Phase 4 | AI pre-fill + visual enhancements | ⬜ Not started |
@@ -30,13 +30,13 @@
 3. Manager Assessment Interface (Day 3)                      ✅ /manager-assess/:id (ManagerAssess.tsx)
    ├─ Category-level rating (8 categories)                   ✅
    ├─ 1-2 guiding questions per category                     ✅
-   ├─ 4 simple options (Consistently Strong / On Track / Needs Dev / Unable)  ✅
+   ├─ Rating options → changed to 1–5 scale (Decision B1)      ✅ code / ⬜ SQL
    └─ Save progress                                          ✅
 
 4. Basic Gap Analysis (Day 4)                                🟡 /gap-analysis/:id (GapAnalysis.tsx)
-   ├─ Calculate category averages from self-assessment       ⚠️ keyword-based, inaccurate
-   ├─ Compare self vs manager                                ⚠️ scale mismatch (1–5 vs 4.5/3.0/1.5)
-   ├─ Show gaps (No Gap / Positive / Concern / Blind Spot)   ⚠️ labels differ from plan
+   ├─ Calculate category averages from self-assessment       ✅ role-aware mapping (src/data/categories.ts)
+   ├─ Compare self vs manager                                ✅ both on 1–5
+   ├─ Show gaps (No Gap / Positive / Concern / Blind Spot)   ✅
    └─ Simple table view                                      ✅
 
 5. Export & Testing (Day 5)                                  🟡
@@ -46,22 +46,26 @@
 ```
 
 ### Phase 1 Close-out Tasks
-- [ ] Shared 8-category constant; compute self-ratings from `roleQuestions.ts` skillCategories (not keywords)
-- [ ] Verify all roles in `roleQuestions.ts` use the same 8 category names
-- [ ] Resolve self vs manager scale mismatch (decision needed)
-- [ ] Rename gap labels to No Gap / Positive / Concern / Blind Spot (definitions needed)
-- [ ] Dashboard category chart: use the same 8 categories
-- [ ] Filter gap analysis + dashboard status by `assessor_role = 'manager'` (Phase 2 prep)
-- [ ] Remove stray files: `UnifiedDashboard.tsx.backup`, `UnifiedDashboard_UPDATED.tsx`
+- [x] Shared 8-category constant; compute self-ratings from `roleQuestions.ts` skillCategories (not keywords) → `src/data/categories.ts`
+- [x] Map all role-specific category names (Associate, UX, Senior, Lead) to the 8 manager categories
+- [x] Resolve self vs manager scale mismatch → Decision B1 (1–5 manager scale)
+- [x] Rename gap labels to No Gap / Positive / Concern / Blind Spot
+- [x] Dashboard category chart: use the same 8 categories
+- [x] Filter gap analysis + dashboard status by `assessor_role = 'manager'` (Phase 2 prep)
+- [x] Remove stray files: `UnifiedDashboard.tsx.backup`, `UnifiedDashboard_UPDATED.tsx`
+- [ ] Run `manager-portal-b1-rating-scale.sql` in Supabase (deletes existing manager assessments)
 - [ ] End-to-end test: submit → manager assess → gap analysis → export
 
-### Open Decisions
-1. **Gap label definitions** – proposed:
+### Decisions (Oct 5, 2026)
+1. **Gap labels** (confirmed):
    - No Gap: |self − manager| ≤ 0.5
    - Positive: manager rates higher than self
    - Concern: self rates higher than manager
    - Blind Spot: manager selected "Unable to Assess"
-2. **Scale alignment** – round self-ratings to nearest manager level, or keep raw values with a wider "No Gap" band?
+   - (No Self-Rating: role has no matching self-assessment category, e.g. Lead → Design Execution)
+2. **Rating scale – Option B1**: managers rate each of the 8 categories on the same 1–5 scale as associates
+   (Beginner / Developing / Competent / Proficient / Expert) + Unable to Assess. Category-level only – question-level (B2) rejected.
+3. **Existing manager assessments** on the old 4.5/3.0/1.5 scale are deleted (test data).
 
 ---
 

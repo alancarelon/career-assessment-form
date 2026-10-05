@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
 import * as XLSX from 'xlsx'
-import { Download, TrendingUp, TrendingDown, Minus, HelpCircle } from 'lucide-react'
+import { Download } from 'lucide-react'
+import { CATEGORIES, getSelfCategoryRatings } from '../data/categories'
 
 interface ManagerAssessment {
   id: string
@@ -22,22 +23,13 @@ interface CategoryGap {
   selfRating: number | null
   managerRating: number | null
   gap: number | null
-  gapType: 'well_calibrated' | 'overestimating' | 'hidden_strength' | 'blind_spot' | 'no_data'
+  gapType: 'no_gap' | 'positive' | 'concern' | 'blind_spot' | 'no_data'
   gapLabel: string
   icon: string
   color: string
 }
 
-const CATEGORIES = [
-  { id: 'problem_discovery', name: 'Problem Discovery & Product Understanding' },
-  { id: 'ux_research', name: 'UX Research and Validation' },
-  { id: 'design_execution', name: 'Design Execution and Craft' },
-  { id: 'ai_integration', name: 'AI and Design Integration' },
-  { id: 'design_systems', name: 'Design System and Consistency' },
-  { id: 'documentation', name: 'Documentation and Knowledge Sharing' },
-  { id: 'collaboration', name: 'Collaboration and Stakeholder Management' },
-  { id: 'professional_growth', name: 'Professional Growth and Community Contribution' }
-]
+const NO_GAP_THRESHOLD = 0.5
 
 export default function GapAnalysis() {
   const { id } = useParams<{ id: string }>()
@@ -52,101 +44,32 @@ export default function GapAnalysis() {
     loadData()
   }, [id])
 
-  const getSelfRatingForCategory = (categoryId: string, skillRatings: any): number | null => {
-    if (!skillRatings) return null
-    
-    // Map category IDs to the actual category names in the associate assessment
-    const categoryNameMap: Record<string, string> = {
-      'problem_discovery': 'Problem Discovery & Product Understanding',
-      'ux_research': 'UX Research and Validation',
-      'design_execution': 'Design Execution and Craft',
-      'ai_integration': 'AI and Design Integration',
-      'design_systems': 'Design System and Consistency',
-      'documentation': 'Documentation and Knowledge Sharing',
-      'collaboration': 'Collaboration and Stakeholder Management',
-      'professional_growth': 'Professional Growth and Community Contribution'
-    }
-    
-    const categoryName = categoryNameMap[categoryId]
-    if (!categoryName) return null
-    
-    // Find all skills that belong to this category
-    // Skills are stored with their full question text as keys
-    const categoryRatings = Object.entries(skillRatings)
-      .filter(([key]) => {
-        // Match based on category keywords
-        const keyLower = key.toLowerCase()
-        
-        if (categoryId === 'problem_discovery') {
-          return keyLower.includes('problem') || keyLower.includes('discovery') || 
-                 keyLower.includes('business goal') || keyLower.includes('success criteria')
-        }
-        if (categoryId === 'ux_research') {
-          return keyLower.includes('research') || keyLower.includes('usability') || 
-                 keyLower.includes('testing') || keyLower.includes('user feedback')
-        }
-        if (categoryId === 'design_execution') {
-          return keyLower.includes('design') && (keyLower.includes('execution') || 
-                 keyLower.includes('wireframe') || keyLower.includes('prototype') ||
-                 keyLower.includes('translate') || keyLower.includes('flows'))
-        }
-        if (categoryId === 'ai_integration') {
-          return keyLower.includes('ai') || keyLower.includes('artificial intelligence')
-        }
-        if (categoryId === 'design_systems') {
-          return keyLower.includes('design system') || keyLower.includes('component') ||
-                 keyLower.includes('pattern') || keyLower.includes('consistency')
-        }
-        if (categoryId === 'documentation') {
-          return keyLower.includes('documentation') || keyLower.includes('handoff') ||
-                 keyLower.includes('figjam') || keyLower.includes('artifact')
-        }
-        if (categoryId === 'collaboration') {
-          return keyLower.includes('collaboration') || keyLower.includes('stakeholder') ||
-                 keyLower.includes('present') || keyLower.includes('feedback') ||
-                 keyLower.includes('workshop') || keyLower.includes('facilitate')
-        }
-        if (categoryId === 'professional_growth') {
-          return keyLower.includes('growth') || keyLower.includes('learning') ||
-                 keyLower.includes('skill') || keyLower.includes('knowledge') ||
-                 keyLower.includes('community') || keyLower.includes('career')
-        }
-        
-        return false
-      })
-      .map(([, value]: [string, any]) => {
-        return typeof value === 'object' ? value.rating : Number(value)
-      })
-    
-    if (categoryRatings.length === 0) return null
-    
-    return categoryRatings.reduce((a, b) => a + b, 0) / categoryRatings.length
-  }
-
-  const calculateGapType = (selfRating: number | null, managerRating: number | null): CategoryGap['gapType'] => {
+  const calculateGapType = (
+    selfRating: number | null,
+    managerRating: number | null,
+    managerLabel: string | undefined
+  ): CategoryGap['gapType'] => {
+    if (managerLabel === 'unable_to_assess') return 'blind_spot'
     if (selfRating === null || managerRating === null) return 'no_data'
-    
+
     const gap = selfRating - managerRating
-    
-    if (Math.abs(gap) <= 0.5) return 'well_calibrated'
-    if (gap > 0.5) return 'overestimating'
-    if (gap < -0.5) return 'hidden_strength'
-    
-    return 'well_calibrated'
+
+    if (Math.abs(gap) <= NO_GAP_THRESHOLD) return 'no_gap'
+    return gap > 0 ? 'concern' : 'positive'
   }
 
-  const getGapLabel = (gapType: CategoryGap['gapType'], gap: number | null): { label: string; icon: string; color: string } => {
+  const getGapLabel = (gapType: CategoryGap['gapType']): { label: string; icon: string; color: string } => {
     switch (gapType) {
-      case 'well_calibrated':
-        return { label: 'Well Calibrated', icon: '✅', color: 'text-green-600' }
-      case 'overestimating':
-        return { label: 'Overestimating', icon: '⚠️', color: 'text-orange-600' }
-      case 'hidden_strength':
-        return { label: 'Hidden Strength', icon: '⬆️', color: 'text-blue-600' }
+      case 'no_gap':
+        return { label: 'No Gap', icon: '✅', color: 'text-green-600' }
+      case 'positive':
+        return { label: 'Positive', icon: '⬆️', color: 'text-blue-600' }
+      case 'concern':
+        return { label: 'Concern', icon: '⚠️', color: 'text-orange-600' }
       case 'blind_spot':
         return { label: 'Blind Spot', icon: '❓', color: 'text-purple-600' }
       case 'no_data':
-        return { label: 'Unable to Assess', icon: '❓', color: 'text-gray-400' }
+        return { label: 'No Self-Rating', icon: '➖', color: 'text-gray-400' }
       default:
         return { label: 'Unknown', icon: '?', color: 'text-gray-400' }
     }
@@ -169,18 +92,23 @@ export default function GapAnalysis() {
         .from('manager_assessments')
         .select('*')
         .eq('associate_assessment_id', id)
+        .eq('assessor_role', 'manager')
         .eq('assessment_status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
         .single()
 
       if (managerError) throw managerError
       setManagerAssessment(managerData)
 
+      const selfRatings = getSelfCategoryRatings(assessmentData.skill_ratings, assessmentData.current_role)
+
       const categoryGaps: CategoryGap[] = CATEGORIES.map(category => {
-        const selfRating = getSelfRatingForCategory(category.id, assessmentData.skill_ratings)
+        const selfRating = selfRatings[category.id]
         const managerRating = managerData.category_ratings_numeric?.[category.id] ?? null
         const gap = selfRating !== null && managerRating !== null ? selfRating - managerRating : null
-        const gapType = calculateGapType(selfRating, managerRating)
-        const { label, icon, color } = getGapLabel(gapType, gap)
+        const gapType = calculateGapType(selfRating, managerRating, managerData.category_ratings?.[category.id])
+        const { label, icon, color } = getGapLabel(gapType)
 
         return {
           id: category.id,
@@ -206,19 +134,19 @@ export default function GapAnalysis() {
   }
 
   const getCalibrationScore = (): number => {
-    const validGaps = gaps.filter(g => g.gapType !== 'no_data')
-    if (validGaps.length === 0) return 0
-    
-    const wellCalibratedCount = gaps.filter(g => g.gapType === 'well_calibrated').length
-    return Math.round((wellCalibratedCount / validGaps.length) * 100)
+    const comparableGaps = gaps.filter(g => g.gap !== null)
+    if (comparableGaps.length === 0) return 0
+
+    const noGapCount = comparableGaps.filter(g => g.gapType === 'no_gap').length
+    return Math.round((noGapCount / comparableGaps.length) * 100)
   }
 
   const getSummaryStats = () => {
     return {
-      wellCalibrated: gaps.filter(g => g.gapType === 'well_calibrated').length,
-      overestimating: gaps.filter(g => g.gapType === 'overestimating').length,
-      hiddenStrengths: gaps.filter(g => g.gapType === 'hidden_strength').length,
-      blindSpots: gaps.filter(g => g.gapType === 'no_data').length
+      noGap: gaps.filter(g => g.gapType === 'no_gap').length,
+      positive: gaps.filter(g => g.gapType === 'positive').length,
+      concern: gaps.filter(g => g.gapType === 'concern').length,
+      blindSpots: gaps.filter(g => g.gapType === 'blind_spot').length
     }
   }
 
@@ -226,21 +154,21 @@ export default function GapAnalysis() {
     const actions: { type: string; category: string; action: string; icon: string }[] = []
 
     gaps.forEach(gap => {
-      if (gap.gapType === 'hidden_strength') {
+      if (gap.gapType === 'concern') {
+        actions.push({
+          type: 'CONCERN',
+          category: gap.name,
+          action: 'Discuss expectations with specific examples and agree on areas for improvement.',
+          icon: '⚠️'
+        })
+      } else if (gap.gapType === 'positive') {
         actions.push({
           type: 'STRENGTH',
           category: gap.name,
           action: 'Build confidence and showcase this skill. Consider mentoring others.',
           icon: '⬆️'
         })
-      } else if (gap.gapType === 'overestimating' && gap.gap && gap.gap > 1.0) {
-        actions.push({
-          type: 'CALIBRATE',
-          category: gap.name,
-          action: 'Provide feedback on expectations and areas for improvement.',
-          icon: '⚠️'
-        })
-      } else if (gap.gapType === 'no_data') {
+      } else if (gap.gapType === 'blind_spot') {
         actions.push({
           type: 'OBSERVE',
           category: gap.name,
@@ -274,9 +202,9 @@ export default function GapAnalysis() {
       { Metric: 'Manager', Value: managerAssessment.assessor_name },
       { Metric: 'Calibration Score', Value: `${getCalibrationScore()}%` },
       { Metric: '', Value: '' },
-      { Metric: 'Well Calibrated', Value: getSummaryStats().wellCalibrated },
-      { Metric: 'Overestimating', Value: getSummaryStats().overestimating },
-      { Metric: 'Hidden Strengths', Value: getSummaryStats().hiddenStrengths },
+      { Metric: 'No Gap', Value: getSummaryStats().noGap },
+      { Metric: 'Positive', Value: getSummaryStats().positive },
+      { Metric: 'Concern', Value: getSummaryStats().concern },
       { Metric: 'Blind Spots', Value: getSummaryStats().blindSpots }
     ]
 
@@ -433,8 +361,8 @@ export default function GapAnalysis() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Well Calibrated</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">{summaryStats.wellCalibrated}</p>
+                <p className="text-gray-600 text-sm font-medium">No Gap</p>
+                <p className="text-3xl font-bold text-green-600 mt-1">{summaryStats.noGap}</p>
               </div>
               <div className="text-3xl">✅</div>
             </div>
@@ -443,20 +371,20 @@ export default function GapAnalysis() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Overestimating</p>
-                <p className="text-3xl font-bold text-orange-600 mt-1">{summaryStats.overestimating}</p>
+                <p className="text-gray-600 text-sm font-medium">Positive</p>
+                <p className="text-3xl font-bold text-blue-600 mt-1">{summaryStats.positive}</p>
               </div>
-              <div className="text-3xl">⚠️</div>
+              <div className="text-3xl">⬆️</div>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Hidden Strengths</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">{summaryStats.hiddenStrengths}</p>
+                <p className="text-gray-600 text-sm font-medium">Concern</p>
+                <p className="text-3xl font-bold text-orange-600 mt-1">{summaryStats.concern}</p>
               </div>
-              <div className="text-3xl">⬆️</div>
+              <div className="text-3xl">⚠️</div>
             </div>
           </div>
 

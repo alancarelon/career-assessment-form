@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
+import { CATEGORIES } from '../data/categories'
 
 interface RatingOption {
   label: string
@@ -10,79 +11,6 @@ interface RatingOption {
   numeric_value: number | null
   icon: string
 }
-
-interface CategoryInfo {
-  id: string
-  name: string
-  questions: string[]
-}
-
-const CATEGORIES: CategoryInfo[] = [
-  {
-    id: 'problem_discovery',
-    name: 'Problem Discovery & Product Understanding',
-    questions: [
-      'How effectively do they define problems, user needs, and business goals before starting design work?',
-      'How well do they create discovery briefs and align with stakeholders on project direction?'
-    ]
-  },
-  {
-    id: 'ux_research',
-    name: 'UX Research and Validation',
-    questions: [
-      'How effectively do they plan and conduct usability testing or evaluative research?',
-      'How well do they synthesize research findings into actionable design insights?'
-    ]
-  },
-  {
-    id: 'design_execution',
-    name: 'Design Execution and Craft',
-    questions: [
-      'How effectively do they translate requirements into flows, wireframes, and high-fidelity designs?',
-      'How well do they balance user needs, business goals, and technical constraints in their designs?'
-    ]
-  },
-  {
-    id: 'ai_integration',
-    name: 'AI and Design Integration',
-    questions: [
-      'How effectively do they use AI tools to support their UX workflow (research, ideation, documentation)?',
-      'How well do they identify opportunities where AI can improve the user experience?'
-    ]
-  },
-  {
-    id: 'design_systems',
-    name: 'Design System and Consistency',
-    questions: [
-      'How consistently do they use approved Design System components and patterns?',
-      'How well do they understand and apply accessibility and consistency guidelines?'
-    ]
-  },
-  {
-    id: 'documentation',
-    name: 'Documentation and Knowledge Sharing',
-    questions: [
-      'How effectively do they create complete documentation to support design handoffs?',
-      'How clearly do their artifacts communicate design intent and decisions to engineers and stakeholders?'
-    ]
-  },
-  {
-    id: 'collaboration',
-    name: 'Collaboration and Stakeholder Management',
-    questions: [
-      'How effectively do they present their work and engage stakeholders throughout the design process?',
-      'How well do they incorporate cross-functional feedback and manage expectations?'
-    ]
-  },
-  {
-    id: 'professional_growth',
-    name: 'Professional Growth and Community Contribution',
-    questions: [
-      'How actively do they invest in developing new UX skills and knowledge?',
-      'How effectively do they share knowledge and contribute to the design community?'
-    ]
-  }
-]
 
 export default function ManagerAssess() {
   const { id } = useParams<{ id: string }>()
