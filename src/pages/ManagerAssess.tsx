@@ -24,6 +24,11 @@ export default function ManagerAssess() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [managerAssessmentId, setManagerAssessmentId] = useState<string | null>(null)
+  const [showDelegate, setShowDelegate] = useState(false)
+  const [delName, setDelName] = useState('')
+  const [delEmail, setDelEmail] = useState('')
+  const [delLink, setDelLink] = useState('')
+  const [delSaving, setDelSaving] = useState(false)
 
   const MANAGER_NAME = 'Zheeshan Durrani'
   const MANAGER_EMAIL = 'zheeshan.durrani@carelon.com'
@@ -158,6 +163,53 @@ export default function ManagerAssess() {
     }
   }
 
+  const handleDelegate = async () => {
+    if (!delName.trim() || !delEmail.trim()) {
+      alert('Please enter the stakeholder\'s name and email.')
+      return
+    }
+
+    if (managerAssessmentId) {
+      const ok = window.confirm(
+        'Assigning a stakeholder will discard your in-progress ratings for this associate. Continue?'
+      )
+      if (!ok) return
+    }
+
+    try {
+      setDelSaving(true)
+
+      if (managerAssessmentId) {
+        const { error: delError } = await supabase
+          .from('manager_assessments')
+          .delete()
+          .eq('id', managerAssessmentId)
+        if (delError) throw delError
+      }
+
+      const { data, error } = await supabase
+        .from('stakeholder_assignments')
+        .insert([{
+          associate_assessment_id: id,
+          stakeholder_name: delName.trim(),
+          stakeholder_email: delEmail.trim().toLowerCase()
+        }])
+        .select('token')
+        .single()
+
+      if (error) throw error
+
+      setDelLink(`${window.location.origin}/stakeholder-assess/${data.token}`)
+    } catch (error: any) {
+      console.error('Error delegating to stakeholder:', error)
+      alert(error?.code === '23505'
+        ? 'A stakeholder is already assigned to this associate.'
+        : 'Failed to delegate. Please try again.')
+    } finally {
+      setDelSaving(false)
+    }
+  }
+
   const handleComplete = async () => {
     if (Object.keys(ratings).length < CATEGORIES.length) {
       alert('Please rate all categories before completing the assessment.')
@@ -264,6 +316,75 @@ export default function ManagerAssess() {
           <p className="text-gray-600">
             {assessment.current_role} • Self-assessment submitted: {new Date(assessment.created_at!).toLocaleDateString()}
           </p>
+          <button
+            onClick={() => setShowDelegate(!showDelegate)}
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium mt-2"
+          >
+            Don't know this person's work well enough? Delegate to a stakeholder →
+          </button>
+
+          {showDelegate && (
+            <div className="mt-3 bg-indigo-50 border border-indigo-200 rounded-lg p-4 max-w-md">
+              {delLink ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-indigo-900">
+                    ✅ Stakeholder assigned. Send them this link:
+                  </p>
+                  <p className="text-xs bg-white border border-indigo-200 rounded px-2 py-1.5 break-all text-gray-700">
+                    {delLink}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(delLink)
+                          alert('Link copied!')
+                        } catch {
+                          window.prompt('Copy this link:', delLink)
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700"
+                    >
+                      📋 Copy Link
+                    </button>
+                    <button
+                      onClick={() => navigate('/dashboard')}
+                      className="px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded text-xs font-medium hover:bg-gray-50"
+                    >
+                      Back to Dashboard
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-indigo-900">
+                    Enter the stakeholder's details. They'll get a unique link to complete this assessment instead of you.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Stakeholder name"
+                    value={delName}
+                    onChange={(e) => setDelName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Stakeholder email"
+                    value={delEmail}
+                    onChange={(e) => setDelEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleDelegate}
+                    disabled={delSaving}
+                    className="w-full px-3 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {delSaving ? 'Assigning...' : '🔗 Generate Stakeholder Link'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Progress Bar */}

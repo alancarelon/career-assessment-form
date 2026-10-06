@@ -11,6 +11,7 @@ interface ManagerAssessment {
   associate_assessment_id: string
   assessor_name: string
   assessor_email: string
+  assessor_role?: string
   category_ratings: Record<string, string>
   category_ratings_numeric: Record<string, number | null>
   overall_notes: string
@@ -92,7 +93,7 @@ export default function GapAnalysis() {
         .from('manager_assessments')
         .select('*')
         .eq('associate_assessment_id', id)
-        .eq('assessor_role', 'manager')
+        .in('assessor_role', ['manager', 'stakeholder'])
         .eq('assessment_status', 'completed')
         .order('completed_at', { ascending: false })
         .limit(1)
@@ -187,7 +188,7 @@ export default function GapAnalysis() {
     const exportData = gaps.map(gap => ({
       Category: gap.name,
       'Self Rating': gap.selfRating?.toFixed(1) || 'N/A',
-      'Manager Rating': gap.managerRating?.toFixed(1) || 'N/A',
+      'Reviewer Rating': gap.managerRating?.toFixed(1) || 'N/A',
       'Gap': gap.gap?.toFixed(1) || 'N/A',
       'Status': gap.gapLabel
     }))
@@ -199,7 +200,7 @@ export default function GapAnalysis() {
     const summaryData = [
       { Metric: 'Associate', Value: assessment.name },
       { Metric: 'Role', Value: assessment.current_role },
-      { Metric: 'Manager', Value: managerAssessment.assessor_name },
+      { Metric: managerAssessment.assessor_role === 'stakeholder' ? 'Stakeholder' : 'Manager', Value: managerAssessment.assessor_name },
       { Metric: 'Calibration Score', Value: `${getCalibrationScore()}%` },
       { Metric: '', Value: '' },
       { Metric: 'No Gap', Value: getSummaryStats().noGap },
@@ -267,6 +268,7 @@ export default function GapAnalysis() {
               </h1>
               <p className="text-gray-600">
                 {assessment.current_role} • Assessed by {managerAssessment.assessor_name}
+                {managerAssessment.assessor_role === 'stakeholder' ? ' (stakeholder)' : ' (manager)'}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Completed: {new Date(managerAssessment.completed_at).toLocaleDateString('en-US', {
@@ -309,7 +311,7 @@ export default function GapAnalysis() {
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700">Self Rating</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Manager Rating</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Reviewer Rating</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-700">Gap</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                 </tr>
@@ -422,7 +424,7 @@ export default function GapAnalysis() {
         {/* Manager Notes */}
         {managerAssessment.overall_notes && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 Manager Notes</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 Reviewer Notes</h2>
             <p className="text-gray-700 whitespace-pre-wrap">{managerAssessment.overall_notes}</p>
           </div>
         )}

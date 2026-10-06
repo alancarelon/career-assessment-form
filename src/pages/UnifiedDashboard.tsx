@@ -7,10 +7,24 @@ import * as XLSX from 'xlsx'
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { CATEGORIES, getSelfCategoryRatings } from '../data/categories'
 
+interface StakeholderAssignment {
+  id: string
+  associate_assessment_id: string
+  stakeholder_name: string
+  stakeholder_email: string
+  token: string
+  status: 'pending' | 'completed'
+  completed_at?: string
+}
+
 interface AssessmentWithStatus extends AssessmentSubmission {
   manager_assessment_status?: 'pending' | 'in_progress' | 'completed'
   manager_assessment_id?: string
   manager_completed_at?: string
+  reviewer_assessment_id?: string
+  reviewer_role?: 'manager' | 'stakeholder'
+  reviewer_name?: string
+  stakeholder_assignment?: StakeholderAssignment | null
 }
 
 export default function UnifiedDashboard() {
@@ -24,6 +38,10 @@ export default function UnifiedDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all')
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const [assigningFor, setAssigningFor] = useState<string | null>(null)
+  const [stakeholderName, setStakeholderName] = useState('')
+  const [stakeholderEmail, setStakeholderEmail] = useState('')
+  const [assignSaving, setAssignSaving] = useState(false)
 
   const MANAGER_TOKEN = 'manager_access_2024'
 
@@ -67,16 +85,42 @@ export default function UnifiedDashboard() {
 
       if (managerError) throw managerError
 
+      // Stakeholder assignments (table added in Phase 2 - tolerate it not existing yet)
+      const { data: stakeholderAssignments, error: saError } = await supabase
+        .from('stakeholder_assignments')
+        .select('*')
+
+      if (saError) console.warn('stakeholder_assignments not available:', saError.message)
+
       const assessmentsWithStatus = assessmentsData?.map(assessment => {
         const managerAssessment = managerAssessments?.find(
           ma => ma.associate_assessment_id === assessment.id && (ma.assessor_role ?? 'manager') === 'manager'
         )
+        const stakeholderAssessment = managerAssessments?.find(
+          ma => ma.associate_assessment_id === assessment.id && ma.assessor_role === 'stakeholder'
+        )
+        const assignment = stakeholderAssignments?.find(
+          sa => sa.associate_assessment_id === assessment.id
+        ) || null
+
+        const reviewer = stakeholderAssessment?.assessment_status === 'completed'
+          ? stakeholderAssessment
+          : managerAssessment
+        const status = reviewer?.assessment_status === 'completed'
+          ? 'completed'
+          : reviewer?.assessment_status === 'in_progress'
+            ? 'in_progress'
+            : 'pending'
 
         return {
           ...assessment,
-          manager_assessment_status: managerAssessment?.assessment_status || 'pending',
+          manager_assessment_status: status,
           manager_assessment_id: managerAssessment?.id,
-          manager_completed_at: managerAssessment?.completed_at
+          manager_completed_at: reviewer?.completed_at,
+          reviewer_assessment_id: stakeholderAssessment?.id ?? managerAssessment?.id,
+          reviewer_role: reviewer?.assessor_role === 'stakeholder' ? 'stakeholder' : 'manager',
+          reviewer_name: reviewer?.assessor_name,
+          stakeholder_assignment: assignment
         }
       }) || []
 
@@ -108,13 +152,13 @@ export default function UnifiedDashboard() {
   }
 
   const resetManagerAssessment = async (assessment: AssessmentWithStatus) => {
-    if (!assessment.manager_assessment_id) return
-    if (!window.confirm(`Reset the manager assessment for ${assessment.name}? Their self-assessment will not be affected.`)) return
+    if (!assessment.reviewer_assessment_id) return
+    if (!window.confirm(`Reset the ${assessment.reviewer_role} assessment for ${assessment.name}? Their self-assessment will not be affected.`)) return
 
     const { error } = await supabase
       .from('manager_assessments')
       .delete()
-      .eq('id', assessment.manager_assessment_id)
+      .eq('id', assessment.reviewer_assessment_id)
 
     if (error) {
       console.error('Error resetting manager assessment:', error)
@@ -123,6 +167,115 @@ export default function UnifiedDashboard() {
     }
 
     loadAssessments()
+  }
+
+  const assignStakeholder = async (assessment: AssessmentWithStatus) => {
+    if (!stakeholderName.trim() || !stakeholderEmail.trim()) {
+      alert('Please enter the stakeholder\'s name and email.')
+      return
+    }
+
+    try {
+      setAssignSaving(true)
+      const { error } = await supabase
+        .from('stakeholder_assignments')
+        .insert([{
+          associate_assessment_id: assessment.id,
+          stakeholder_name: stakeholderName.trim(),
+          stakeholder_email: stakeholderEmail.trim().toLowerCase()
+        }])
+
+      if (error) throw error
+
+      setAssigningFor(null)
+      setStakeholderName('')
+      setStakeholderEmail('')
+      loadAssessments()
+    } catch (error) {
+      console.error('Error assigning stakeholder:', error)
+      alert('Failed to assign stakeholder. Please try again.')
+    } finally {
+      setAssignSaving(false)
+    }
+  }
+
+  const cancelStakeholderAssignment = async (assignment: StakeholderAssignment) => {
+    if (!window.confirm(`Remove the stakeholder assignment for ${assignment.stakeholder_name}?`)) return
+
+    const { error } = await supabase
+      .from('stakeholder_assignments')
+      .delete()
+      .eq('id', assignment.id)
+
+    if (error) {
+      console.error('Error removing assignment:', error)
+      alert('Failed to remove assignment. Please try again.')
+      return
+    }
+
+    loadAssessments()
+  }
+
+  const stakeholderLink = (token: string) =>
+    `${window.location.origin}/stakeholder-assess/${token}`
+
+  const copyStakeholderLink = async (token: string) => {
+    try {
+      await navigator.clipboard.writeText(stakeholderLink(token))
+      alert('Link copied to clipboard!')
+    } catch {
+      window.prompt('Copy this link:', stakeholderLink(token))
+    }
+  }
+
+  const assignStakeholderBlock = (assessment: AssessmentWithStatus) => {
+    if (assigningFor !== assessment.id) {
+      return (
+        <button
+          onClick={() => { setAssigningFor(assessment.id!); setStakeholderName(''); setStakeholderEmail('') }}
+          className="w-full px-3 py-2 bg-white text-indigo-700 border border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors font-medium text-sm"
+        >
+          👥 Assign Stakeholder
+        </button>
+      )
+    }
+
+    return (
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2">
+        <p className="text-xs font-medium text-indigo-900">
+          Delegate this assessment to a stakeholder:
+        </p>
+        <input
+          type="text"
+          placeholder="Stakeholder name"
+          value={stakeholderName}
+          onChange={(e) => setStakeholderName(e.target.value)}
+          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
+        <input
+          type="email"
+          placeholder="Stakeholder email"
+          value={stakeholderEmail}
+          onChange={(e) => setStakeholderEmail(e.target.value)}
+          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => assignStakeholder(assessment)}
+            disabled={assignSaving}
+            className="flex-1 px-2 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          >
+            {assignSaving ? 'Creating...' : '🔗 Generate Link'}
+          </button>
+          <button
+            onClick={() => setAssigningFor(null)}
+            className="px-2 py-1.5 bg-white text-gray-600 border border-gray-300 rounded text-xs font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const calculateAvgRating = (skillRatings: any) => {
@@ -401,20 +554,53 @@ export default function UnifiedDashboard() {
                           >
                             📊 View Gap Analysis
                           </button>
+                          {assessment.reviewer_role === 'manager' && (
+                            <button
+                              onClick={() => navigate(`/manager-assess/${assessment.id}`)}
+                              className="w-full px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                            >
+                              ✏️ Edit
+                            </button>
+                          )}
+                          {assessment.reviewer_name && (
+                            <p className="text-xs text-gray-500 text-center">
+                              Reviewed by {assessment.reviewer_role === 'stakeholder' ? 'stakeholder ' : ''}{assessment.reviewer_name}
+                            </p>
+                          )}
+                        </>
+                      ) : assessment.stakeholder_assignment ? (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                          <p className="text-xs font-medium text-indigo-900 mb-1">
+                            👥 Stakeholder: {assessment.stakeholder_assignment.stakeholder_name}
+                          </p>
+                          <p className="text-xs text-indigo-700 mb-2">
+                            ⏳ Awaiting response • {assessment.stakeholder_assignment.stakeholder_email}
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => copyStakeholderLink(assessment.stakeholder_assignment!.token)}
+                              className="flex-1 px-2 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 transition-colors"
+                            >
+                              📋 Copy Link
+                            </button>
+                            <button
+                              onClick={() => cancelStakeholderAssignment(assessment.stakeholder_assignment!)}
+                              className="px-2 py-1.5 bg-white text-red-600 border border-red-200 rounded text-xs font-medium hover:bg-red-50 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
                           <button
                             onClick={() => navigate(`/manager-assess/${assessment.id}`)}
-                            className="w-full px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                            className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
                           >
-                            ✏️ Edit
+                            {assessment.manager_assessment_status === 'in_progress' ? '▶️ Continue' : '🚀 Assess Myself'}
                           </button>
+                          {assignStakeholderBlock(assessment)}
                         </>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/manager-assess/${assessment.id}`)}
-                          className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
-                        >
-                          {assessment.manager_assessment_status === 'in_progress' ? '▶️ Continue' : '🚀 Start Assessment'}
-                        </button>
                       )}
                       <button
                         onClick={() => navigate(`/user-report/${assessment.id}`)}
@@ -422,7 +608,7 @@ export default function UnifiedDashboard() {
                       >
                         📄 View Self-Assessment
                       </button>
-                      {assessment.name.includes('(Test)') && assessment.manager_assessment_id && (
+                      {assessment.name.includes('(Test)') && assessment.reviewer_assessment_id && (
                         <button
                           onClick={() => resetManagerAssessment(assessment)}
                           className="w-full px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
