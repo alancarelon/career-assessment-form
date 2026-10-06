@@ -43,5 +43,11 @@ CREATE POLICY "Allow delete stakeholder assignments"
   ON stakeholder_assignments FOR DELETE
   USING (true);
 
+-- Fix: manager_assessments had no DELETE policy in Phase 1, so RLS silently
+-- blocked deletes (used by the dashboard Reset button). No data is affected.
+CREATE POLICY "Allow delete manager assessments"
+  ON manager_assessments FOR DELETE
+  USING (true);
+
 -- Verification
 SELECT 'Stakeholder assignments table ready:' AS status, COUNT(*) AS count FROM stakeholder_assignments;
