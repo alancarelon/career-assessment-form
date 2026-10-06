@@ -529,6 +529,13 @@ export default function UnifiedDashboard() {
                         )}
                       </div>
 
+                      {assessment.manager_assessment_status === 'completed' && assessment.reviewer_name && (
+                        <p className="text-xs font-medium text-gray-700 mb-2">
+                          👤 Reviewed by {assessment.reviewer_name}
+                          <span className="text-gray-500 font-normal"> ({assessment.reviewer_role === 'stakeholder' ? 'Stakeholder' : 'Manager'})</span>
+                        </p>
+                      )}
+
                       <p className="text-sm text-gray-600 font-medium mb-1 truncate" title={assessment.current_role}>
                         {assessment.current_role}
                       </p>
@@ -561,11 +568,6 @@ export default function UnifiedDashboard() {
                             >
                               ✏️ Edit
                             </button>
-                          )}
-                          {assessment.reviewer_name && (
-                            <p className="text-xs text-gray-500 text-center">
-                              Reviewed by {assessment.reviewer_role === 'stakeholder' ? 'stakeholder ' : ''}{assessment.reviewer_name}
-                            </p>
                           )}
                         </>
                       ) : assessment.stakeholder_assignment ? (
