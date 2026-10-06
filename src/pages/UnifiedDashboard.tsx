@@ -107,6 +107,24 @@ export default function UnifiedDashboard() {
     pending: assessments.filter(a => a.manager_assessment_status !== 'completed').length
   }
 
+  const resetManagerAssessment = async (assessment: AssessmentWithStatus) => {
+    if (!assessment.manager_assessment_id) return
+    if (!window.confirm(`Reset the manager assessment for ${assessment.name}? Their self-assessment will not be affected.`)) return
+
+    const { error } = await supabase
+      .from('manager_assessments')
+      .delete()
+      .eq('id', assessment.manager_assessment_id)
+
+    if (error) {
+      console.error('Error resetting manager assessment:', error)
+      alert('Failed to reset assessment. Please try again.')
+      return
+    }
+
+    loadAssessments()
+  }
+
   const calculateAvgRating = (skillRatings: any) => {
     if (!skillRatings || Object.keys(skillRatings).length === 0) return 0
     const ratings = Object.values(skillRatings)
@@ -404,6 +422,14 @@ export default function UnifiedDashboard() {
                       >
                         📄 View Self-Assessment
                       </button>
+                      {assessment.name.includes('(Test)') && assessment.manager_assessment_id && (
+                        <button
+                          onClick={() => resetManagerAssessment(assessment)}
+                          className="w-full px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
+                        >
+                          ♻️ Reset Assessment
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
