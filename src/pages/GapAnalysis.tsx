@@ -42,6 +42,7 @@ export default function GapAnalysis() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    document.title = 'Gap Analysis | UX Growth Journey'
     loadData()
   }, [id])
 

@@ -14,6 +14,7 @@ export default function UserReport() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    document.title = 'Self-Assessment Report | UX Growth Journey'
     fetchUserData()
   }, [id])
 

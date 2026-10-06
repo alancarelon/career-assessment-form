@@ -41,6 +41,7 @@ export default function StakeholderAssess() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
+    document.title = 'Stakeholder Assessment | UX Growth Journey'
     loadData()
   }, [token])
 

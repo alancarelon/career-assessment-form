@@ -34,6 +34,7 @@ export default function ManagerAssess() {
   const MANAGER_EMAIL = 'zheeshan.durrani@carelon.com'
 
   useEffect(() => {
+    document.title = 'Manager Assessment | UX Growth Journey'
     loadData()
   }, [id])
 

@@ -46,6 +46,10 @@ export default function UnifiedDashboard() {
   const MANAGER_TOKEN = 'manager_access_2024'
 
   useEffect(() => {
+    document.title = 'Manager Portal | UX Growth Journey'
+  }, [])
+
+  useEffect(() => {
     const token = searchParams.get('token')
     if (token === MANAGER_TOKEN) {
       setIsAuthorized(true)
