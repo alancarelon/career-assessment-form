@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseManager } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
 import { CATEGORIES } from '../data/categories'
 
@@ -116,14 +116,14 @@ export default function ManagerAssess() {
       }
 
       if (managerAssessmentId) {
-        const { error } = await supabase
+        const { error } = await supabaseManager
           .from('manager_assessments')
           .update(assessmentData)
           .eq('id', managerAssessmentId)
 
         if (error) throw error
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseManager
           .from('manager_assessments')
           .insert([assessmentData])
           .select()
@@ -180,14 +180,14 @@ export default function ManagerAssess() {
       setDelSaving(true)
 
       if (managerAssessmentId) {
-        const { error: delError } = await supabase
+        const { error: delError } = await supabaseManager
           .from('manager_assessments')
           .delete()
           .eq('id', managerAssessmentId)
         if (delError) throw delError
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseManager
         .from('stakeholder_assignments')
         .insert([{
           associate_assessment_id: id,
@@ -240,14 +240,14 @@ export default function ManagerAssess() {
       }
 
       if (managerAssessmentId) {
-        const { error } = await supabase
+        const { error } = await supabaseManager
           .from('manager_assessments')
           .update(assessmentData)
           .eq('id', managerAssessmentId)
 
         if (error) throw error
       } else {
-        const { error } = await supabase
+        const { error } = await supabaseManager
           .from('manager_assessments')
           .insert([assessmentData])
 

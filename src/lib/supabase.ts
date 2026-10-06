@@ -9,6 +9,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Client for manager-only operations. Sends the manager token as a header so
+// RLS policies can permit destructive actions (delete/update/assign) only to it.
+export const supabaseManager = createClient(supabaseUrl, supabaseAnonKey, {
+  global: { headers: { 'x-manager-token': 'manager_access_2024' } }
+})
+
 export interface AssessmentSubmission {
   id?: string
   created_at?: string

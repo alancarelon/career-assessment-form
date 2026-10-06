@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseManager } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
 import { Download, BarChart3, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -155,7 +155,7 @@ export default function UnifiedDashboard() {
     if (!assessment.reviewer_assessment_id) return
     if (!window.confirm(`Reset the ${assessment.reviewer_role} assessment for ${assessment.name}? Their self-assessment will not be affected.`)) return
 
-    const { error } = await supabase
+    const { error } = await supabaseManager
       .from('manager_assessments')
       .delete()
       .eq('id', assessment.reviewer_assessment_id)
@@ -177,7 +177,7 @@ export default function UnifiedDashboard() {
 
     try {
       setAssignSaving(true)
-      const { error } = await supabase
+      const { error } = await supabaseManager
         .from('stakeholder_assignments')
         .insert([{
           associate_assessment_id: assessment.id,
@@ -202,7 +202,7 @@ export default function UnifiedDashboard() {
   const cancelStakeholderAssignment = async (assignment: StakeholderAssignment) => {
     if (!window.confirm(`Remove the stakeholder assignment for ${assignment.stakeholder_name}?`)) return
 
-    const { error } = await supabase
+    const { error } = await supabaseManager
       .from('stakeholder_assignments')
       .delete()
       .eq('id', assignment.id)
