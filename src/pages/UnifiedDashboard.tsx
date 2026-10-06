@@ -507,34 +507,36 @@ export default function UnifiedDashboard() {
                     className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-5 flex flex-col"
                   >
                     <div className="mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate" title={assessment.name}>
-                        {assessment.name}
-                      </h3>
-                      
-                      <div className="mb-2">
-                        {assessment.manager_assessment_status === 'completed' && (
-                          <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                            ✅ Completed
-                          </span>
-                        )}
-                        {assessment.manager_assessment_status === 'in_progress' && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                            🔄 In Progress
-                          </span>
-                        )}
-                        {assessment.manager_assessment_status === 'pending' && (
-                          <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                            ⏳ Pending
-                          </span>
-                        )}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate" title={assessment.name}>
+                          {assessment.name}
+                        </h3>
+
+                        <div className="flex flex-col items-end shrink-0">
+                          {assessment.manager_assessment_status === 'completed' && (
+                            <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                              ✅ Completed
+                            </span>
+                          )}
+                          {assessment.manager_assessment_status === 'in_progress' && (
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                              🔄 In Progress
+                            </span>
+                          )}
+                          {assessment.manager_assessment_status === 'pending' && (
+                            <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                              ⏳ Pending
+                            </span>
+                          )}
+                          {assessment.manager_assessment_status === 'completed' && assessment.reviewer_name && (
+                            <p className="text-xs font-medium text-gray-600 mt-1 text-right">
+                              👤 {assessment.reviewer_name}
+                              <span className="text-gray-400 font-normal"> ({assessment.reviewer_role === 'stakeholder' ? 'Stakeholder' : 'Manager'})</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      {assessment.manager_assessment_status === 'completed' && assessment.reviewer_name && (
-                        <p className="text-xs font-medium text-gray-700 mb-2">
-                          👤 Reviewed by {assessment.reviewer_name}
-                          <span className="text-gray-500 font-normal"> ({assessment.reviewer_role === 'stakeholder' ? 'Stakeholder' : 'Manager'})</span>
-                        </p>
-                      )}
 
                       <p className="text-sm text-gray-600 font-medium mb-1 truncate" title={assessment.current_role}>
                         {assessment.current_role}
