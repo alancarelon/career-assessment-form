@@ -134,12 +134,14 @@ export default function GapAnalysis() {
     }
   }
 
-  const getCalibrationScore = (): number => {
+  const getRatingMatch = (): { score: number; matched: number; total: number } => {
     const comparableGaps = gaps.filter(g => g.gap !== null)
-    if (comparableGaps.length === 0) return 0
-
-    const noGapCount = comparableGaps.filter(g => g.gapType === 'no_gap').length
-    return Math.round((noGapCount / comparableGaps.length) * 100)
+    const matched = comparableGaps.filter(g => g.gapType === 'no_gap').length
+    return {
+      score: comparableGaps.length === 0 ? 0 : Math.round((matched / comparableGaps.length) * 100),
+      matched,
+      total: comparableGaps.length
+    }
   }
 
   const getSummaryStats = () => {
@@ -201,7 +203,7 @@ export default function GapAnalysis() {
       { Metric: 'Associate', Value: assessment.name },
       { Metric: 'Role', Value: assessment.current_role },
       { Metric: managerAssessment.assessor_role === 'stakeholder' ? 'Stakeholder' : 'Manager', Value: managerAssessment.assessor_name },
-      { Metric: 'Calibration Score', Value: `${getCalibrationScore()}%` },
+      { Metric: 'Rating Match', Value: `${getRatingMatch().score}%` },
       { Metric: '', Value: '' },
       { Metric: 'No Gap', Value: getSummaryStats().noGap },
       { Metric: 'Positive', Value: getSummaryStats().positive },
@@ -246,7 +248,7 @@ export default function GapAnalysis() {
     )
   }
 
-  const calibrationScore = getCalibrationScore()
+  const ratingMatch = getRatingMatch()
   const summaryStats = getSummaryStats()
   const priorityActions = getPriorityActions()
 
@@ -285,20 +287,6 @@ export default function GapAnalysis() {
               <Download className="w-4 h-4" />
               Export
             </button>
-          </div>
-        </div>
-
-        {/* Calibration Score */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Overall Calibration</p>
-              <p className="text-4xl font-bold text-purple-600">{calibrationScore}%</p>
-              <p className="text-sm text-gray-500 mt-1">
-                {calibrationScore >= 75 ? '✅ Excellent' : calibrationScore >= 50 ? '👍 Good' : '⚠️ Needs Attention'}
-              </p>
-            </div>
-            <div className="text-6xl">🎯</div>
           </div>
         </div>
 
@@ -355,6 +343,29 @@ export default function GapAnalysis() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Rating Match */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">🎯 Rating Match</h2>
+              <p className="text-4xl font-bold text-purple-600 mb-1">
+                {ratingMatch.score}%
+                <span className="text-base font-normal text-gray-500 ml-3">
+                  {ratingMatch.matched} of {ratingMatch.total} categories aligned
+                </span>
+              </p>
+              <p className="text-sm text-gray-500 mt-1 mb-3">
+                {ratingMatch.score >= 75 ? '✅ Excellent — the associate and reviewer see performance the same way.' : ratingMatch.score >= 50 ? '👍 Good — mostly aligned, a few areas to discuss.' : '⚠️ Needs Attention — a significant perception gap worth discussing.'}
+              </p>
+              <p className="text-sm text-gray-600 max-w-2xl">
+                This shows how closely the associate's self-ratings match the reviewer's ratings
+                (within ±0.5 per category). A high percentage means both see performance the same
+                way; a low percentage means a perception gap worth discussing in a 1:1.
+              </p>
+            </div>
           </div>
         </div>
 
