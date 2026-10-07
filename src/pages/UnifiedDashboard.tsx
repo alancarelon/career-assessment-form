@@ -4,8 +4,8 @@ import { supabase, supabaseManager } from '../lib/supabase'
 import type { AssessmentSubmission } from '../lib/supabase'
 import { Download, BarChart3, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { CATEGORIES, getSelfCategoryRatings } from '../data/categories'
+import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts'
+import { CATEGORIES, getSelfCategoryRatings, getExpectedCategoryRatings } from '../data/categories'
 
 interface StakeholderAssignment {
   id: string
@@ -24,6 +24,7 @@ interface AssessmentWithStatus extends AssessmentSubmission {
   reviewer_assessment_id?: string
   reviewer_role?: 'manager' | 'stakeholder'
   reviewer_name?: string
+  reviewer_ratings_numeric?: Record<string, number | null>
   stakeholder_assignment?: StakeholderAssignment | null
 }
 
@@ -124,6 +125,7 @@ export default function UnifiedDashboard() {
           reviewer_assessment_id: stakeholderAssessment?.id ?? managerAssessment?.id,
           reviewer_role: reviewer?.assessor_role === 'stakeholder' ? 'stakeholder' : 'manager',
           reviewer_name: reviewer?.assessor_name,
+          reviewer_ratings_numeric: reviewer?.assessment_status === 'completed' ? reviewer?.category_ratings_numeric : undefined,
           stakeholder_assignment: assignment
         }
       }) || []
@@ -336,6 +338,86 @@ export default function UnifiedDashboard() {
         associateCount: perCategory[c.id].length
       }))
       .sort((a, b) => b.average - a.average)
+  }
+
+  const getTeamCategoryData = () => {
+    const avg = (vals: number[]) => vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+    return CATEGORIES.map(c => {
+      const selfVals: number[] = []
+      const reviewerVals: number[] = []
+      const expectedVals: number[] = []
+      assessments.forEach(a => {
+        const self = getSelfCategoryRatings(a.skill_ratings, a.current_role)[c.id]
+        if (self !== null) selfVals.push(self)
+        const expected = getExpectedCategoryRatings(a.current_role)[c.id]
+        if (expected !== null) expectedVals.push(expected)
+        const reviewer = a.reviewer_ratings_numeric?.[c.id]
+        if (reviewer !== null && reviewer !== undefined) reviewerVals.push(reviewer)
+      })
+      return {
+        id: c.id,
+        category: c.name,
+        self: avg(selfVals),
+        reviewer: avg(reviewerVals),
+        expected: avg(expectedVals),
+        reviewerCount: reviewerVals.length
+      }
+    })
+  }
+
+  const getCollectiveGaps = () => {
+    return getTeamCategoryData()
+      .filter(d => d.expected !== null)
+      .map(d => ({
+        category: d.category,
+        expected: d.expected!,
+        actual: d.reviewer ?? d.self,
+        gap: d.expected! - (d.reviewer ?? d.self ?? 0),
+        basedOnReviewer: d.reviewer !== null
+      }))
+      .sort((a, b) => b.gap - a.gap)
+  }
+
+  const getCapabilityHeatmap = () => {
+    return CATEGORIES.map(c => {
+      const buckets = { strong: [] as string[], solid: [] as string[], developing: [] as string[] }
+      assessments.forEach(a => {
+        const rating = a.reviewer_ratings_numeric?.[c.id]
+          ?? getSelfCategoryRatings(a.skill_ratings, a.current_role)[c.id]
+        if (rating === null || rating === undefined) return
+        if (rating >= 4) buckets.strong.push(a.name)
+        else if (rating >= 3) buckets.solid.push(a.name)
+        else buckets.developing.push(a.name)
+      })
+      return { id: c.id, category: c.name, ...buckets }
+    })
+  }
+
+  const getAlignmentLeaderboard = () => {
+    return assessments
+      .filter(a => a.reviewer_ratings_numeric)
+      .map(a => {
+        const selfRatings = getSelfCategoryRatings(a.skill_ratings, a.current_role)
+        let matched = 0
+        let total = 0
+        CATEGORIES.forEach(c => {
+          const self = selfRatings[c.id]
+          const rev = a.reviewer_ratings_numeric?.[c.id]
+          if (self !== null && rev !== null && rev !== undefined) {
+            total++
+            if (Math.abs(self - rev) <= 0.5) matched++
+          }
+        })
+        return {
+          name: a.name,
+          role: a.current_role,
+          reviewer: a.reviewer_name,
+          pct: total === 0 ? 0 : Math.round((matched / total) * 100),
+          matched,
+          total
+        }
+      })
+      .sort((a, b) => a.pct - b.pct)
   }
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316']
@@ -694,6 +776,131 @@ export default function UnifiedDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Team Radar: Self vs Reviewer vs Expected */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">🕸️ Team Capability — Self vs Reviewer vs Expected</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Average ratings per category. "Expected" is the target proficiency for each person's role.
+                </p>
+                <ResponsiveContainer width="100%" height={360}>
+                  <RadarChart data={getTeamCategoryData().map(d => ({
+                    category: d.category,
+                    'Self (team avg)': d.self !== null ? Number(d.self.toFixed(2)) : 0,
+                    'Reviewer (team avg)': d.reviewer !== null ? Number(d.reviewer.toFixed(2)) : null,
+                    'Expected level': d.expected !== null ? Number(d.expected.toFixed(2)) : null
+                  }))}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} />
+                    <PolarRadiusAxis domain={[0, 5]} tick={{ fontSize: 10 }} />
+                    <Radar name="Self (team avg)" dataKey="Self (team avg)" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
+                    <Radar name="Reviewer (team avg)" dataKey="Reviewer (team avg)" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} />
+                    <Radar name="Expected level" dataKey="Expected level" stroke="#10b981" fill="none" strokeDasharray="4 4" />
+                    <Legend />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+                <p className="text-xs text-gray-400 mt-2">
+                  Reviewer line only includes completed reviews ({assessments.filter(a => a.reviewer_ratings_numeric).length} of {assessments.length} reviewed).
+                </p>
+              </div>
+
+              {/* Collective Gaps + Capability Heatmap */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">🎯 Where the Team Can Improve</h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Categories ranked by how far the team is below the expected level for their role.
+                  </p>
+                  <div className="space-y-3">
+                    {getCollectiveGaps().map((g, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-gray-400 w-6">#{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate" title={g.category}>{g.category}</p>
+                          <p className="text-[10px] text-gray-500">
+                            Expected {g.expected.toFixed(1)} • Actual {g.actual !== null ? g.actual.toFixed(1) : 'N/A'}{g.basedOnReviewer ? ' (reviewer)' : ' (self)'}
+                          </p>
+                        </div>
+                        <span className={`text-sm font-bold px-2 py-1 rounded ${
+                          g.gap > 1 ? 'bg-red-100 text-red-700' : g.gap > 0.5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {g.gap > 0 ? `${g.gap.toFixed(1)} below` : 'On par'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">🧩 Team Skill Coverage</h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Team members per strength level. Reviewer ratings used where available, else self-ratings.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-left">
+                          <th className="py-2 pr-2 font-medium text-gray-600">Category</th>
+                          <th className="py-2 px-2 font-medium text-green-700 text-center">Strong (4+)</th>
+                          <th className="py-2 px-2 font-medium text-blue-700 text-center">Solid (3+)</th>
+                          <th className="py-2 px-2 font-medium text-orange-700 text-center">Developing</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getCapabilityHeatmap().map((row, i) => (
+                          <tr key={i} className="border-b border-gray-100">
+                            <td className="py-2 pr-2 text-gray-800 text-xs">{row.category}</td>
+                            <td className="py-2 px-2 text-center">
+                              <span
+                                className={`inline-block min-w-6 px-1.5 py-0.5 rounded text-xs font-semibold ${row.strong.length === 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                                title={row.strong.join(', ') || 'No one rated 4+'}
+                              >
+                                {row.strong.length === 0 ? '0 ⚠️' : row.strong.length}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              <span className="inline-block min-w-6 px-1.5 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700" title={row.solid.join(', ') || 'None'}>
+                                {row.solid.length}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              <span className="inline-block min-w-6 px-1.5 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-700" title={row.developing.join(', ') || 'None'}>
+                                {row.developing.length}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Alignment Leaderboard */}
+              {getAlignmentLeaderboard().length > 0 && (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">📋 Rating Match by Associate</h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    % of categories where self and reviewer ratings agree (within ±0.5). Lowest first — these may benefit most from a calibration conversation.
+                  </p>
+                  <div className="space-y-2">
+                    {getAlignmentLeaderboard().map((row, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">{row.name}</p>
+                          <p className="text-xs text-gray-500">{row.role} • Reviewed by {row.reviewer}</p>
+                        </div>
+                        <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                          row.pct >= 75 ? 'bg-green-100 text-green-700' : row.pct >= 50 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          {row.pct}% ({row.matched}/{row.total})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,5 +1,5 @@
 import { roleBasedQuestions } from './roleQuestions'
-import { getSkillName } from '../utils/scoreCalculations'
+import { getSkillName, getIdealRating } from '../utils/scoreCalculations'
 
 export type CategoryId =
   | 'problem_discovery'
@@ -145,6 +145,31 @@ export const getSelfCategoryRatings = (
     const rating = typeof value === 'object' && value !== null ? Number(value.rating) : Number(value)
     if (!rating || isNaN(rating)) return
     ;(buckets[categoryId] ||= []).push(rating)
+  })
+
+  Object.entries(buckets).forEach(([categoryId, ratings]) => {
+    if (ratings && ratings.length > 0) {
+      result[categoryId as CategoryId] = ratings.reduce((a, b) => a + b, 0) / ratings.length
+    }
+  })
+
+  return result
+}
+
+export const getExpectedCategoryRatings = (
+  role: string
+): Record<CategoryId, number | null> => {
+  const result = Object.fromEntries(CATEGORIES.map(c => [c.id, null])) as Record<CategoryId, number | null>
+  const roleQuestions = roleBasedQuestions[role]
+  if (!roleQuestions) return result
+
+  const buckets: Partial<Record<CategoryId, number[]>> = {}
+  roleQuestions.skillCategories.forEach(cat => {
+    const categoryId = ROLE_CATEGORY_MAP[cat.category]
+    if (!categoryId || cat.questionType === 'multiselect') return
+    cat.skills.forEach(skill => {
+      ;(buckets[categoryId] ||= []).push(getIdealRating(skill))
+    })
   })
 
   Object.entries(buckets).forEach(([categoryId, ratings]) => {
